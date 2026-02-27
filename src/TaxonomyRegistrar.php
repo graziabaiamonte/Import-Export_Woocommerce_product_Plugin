@@ -621,6 +621,7 @@ final class TaxonomyRegistrar
         if ($totalActiveFilters > 0) {
             echo '<span class="filter-count">' . esc_html($totalActiveFilters) . '</span>';
         }
+        echo '<span class="toggle-indicator" aria-hidden="true"></span>';
         echo '</summary>';
         
         echo '<div class="filter-content">';

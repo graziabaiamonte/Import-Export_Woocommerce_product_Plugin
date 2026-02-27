@@ -112,26 +112,28 @@
     border-color: #2271b1;
 }
 
-/* Icona freccia */
-.woo-excel-tax-filter summary::before {
-    content: '\f0dc';
-    font-family: dashicons;
-    font-size: 16px;
+/* Indicatore freccia (come pulsanti WordPress standard) */
+.woo-excel-tax-filter summary .toggle-indicator {
+    display: inline-block;
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    color: #8c8f94;
-    transition: transform 0.2s ease, color 0.15s ease;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #8c8f94;
+    transition: transform 0.15s ease, border-top-color 0.15s ease;
 }
 
-.woo-excel-tax-filter summary:hover::before {
-    color: #2271b1;
+.woo-excel-tax-filter summary:hover .toggle-indicator {
+    border-top-color: #2271b1;
 }
 
-.woo-excel-tax-filter[open] summary::before {
+.woo-excel-tax-filter[open] summary .toggle-indicator {
     transform: translateY(-50%) rotate(180deg);
-    color: #2271b1;
+    border-top-color: #2271b1;
 }
 
 /* Badge contatore filtri attivi */
@@ -153,7 +155,7 @@
 .woo-excel-tax-filter .filter-content {
     position: absolute !important;
     top: 100% !important;
-    left: 0 !important;
+    right: 0 !important;
     margin-top: 4px !important;
     padding: 12px !important;
     background: #fff !important;
