@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 Cosa Fa Questo Plugin
+## 📋 Cosa Fa Il Plugin
 
 Questo plugin ti permette di:
 
