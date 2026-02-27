@@ -1,0 +1,441 @@
+.woo-excel-importer-container {
+    margin-top: 20px;
+}
+
+.woo-excel-importer-container .card {
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.woo-excel-importer-container .card h2 {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.woo-excel-importer-container .form-table th {
+    padding: 20px 10px 20px 0;
+    width: 200px;
+}
+
+.woo-excel-importer-container .form-table td {
+    padding: 15px 10px;
+}
+
+.woo-excel-importer-container input[type="file"] {
+    padding: 5px;
+}
+
+.woo-excel-importer-container .description {
+    color: #646970;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.notice.notice-success ul {
+    margin: 10px 0;
+    list-style: none;
+    padding-left: 0;
+}
+
+.notice.notice-success ul li {
+    margin: 5px 0;
+}
+
+.notice details {
+    margin-top: 15px;
+}
+
+.notice details summary {
+    font-weight: 600;
+    padding: 5px 0;
+}
+
+.notice .widefat {
+    margin-top: 10px;
+    border: 1px solid #c3c4c7;
+}
+
+.notice .widefat th {
+    background: #f6f7f7;
+    font-weight: 600;
+    padding: 8px 10px;
+}
+
+.notice .widefat td {
+    padding: 8px 10px;
+    border-top: 1px solid #c3c4c7;
+}
+
+/* ========================================
+   Taxonomy Filter Styles - WordPress Admin
+   ======================================== */
+
+/* Container principale */
+.woo-excel-tax-filter {
+    display: inline-block;
+    margin: 0 8px 0 0;
+    vertical-align: top;
+    position: relative;
+}
+
+/* Pulsante dropdown */
+#posts-filter .woo-excel-tax-filter summary,
+.woo-excel-tax-filter summary {
+    cursor: pointer !important;
+    user-select: none !important;
+    padding: 0 28px 0 12px !important;
+    height: 32px !important;
+    line-height: 30px !important;
+    border: 1px solid #8c8f94 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    color: #2c3338 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    position: relative !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04) !important;
+    min-width: 160px !important;
+}
+
+.woo-excel-tax-filter summary:hover {
+    border-color: #2271b1;
+    color: #2271b1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.woo-excel-tax-filter summary:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    border-color: #2271b1;
+}
+
+/* Icona freccia */
+.woo-excel-tax-filter summary::before {
+    content: '\f0dc';
+    font-family: dashicons;
+    font-size: 16px;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8c8f94;
+    transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.woo-excel-tax-filter summary:hover::before {
+    color: #2271b1;
+}
+
+.woo-excel-tax-filter[open] summary::before {
+    transform: translateY(-50%) rotate(180deg);
+    color: #2271b1;
+}
+
+/* Badge contatore filtri attivi */
+.woo-excel-tax-filter summary .filter-count {
+    display: inline-block;
+    background: #2271b1;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+/* Pannello dropdown */
+#posts-filter .woo-excel-tax-filter .filter-content,
+.woo-excel-tax-filter .filter-content {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 4px !important;
+    padding: 12px !important;
+    background: #fff !important;
+    border: 1px solid #c3c4c7 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15) !important;
+    max-height: 600px !important;
+    overflow-y: auto !important;
+    min-width: 380px !important;
+    z-index: 9999 !important;
+    animation: slideDown 0.2s ease !important;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar personalizzata */
+.woo-excel-tax-filter .filter-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.woo-excel-tax-filter .filter-content::-webkit-scrollbar-track {
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+.woo-excel-tax-filter .filter-content::-webkit-scrollbar-thumb {
+    background: #c3c4c7;
+    border-radius: 4px;
+}
+
+.woo-excel-tax-filter .filter-content::-webkit-scrollbar-thumb:hover {
+    background: #8c8f94;
+}
+
+/* Header sezione con pulsanti azione */
+.woo-excel-tax-filter .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #f0f0f1;
+}
+
+.woo-excel-tax-filter .filter-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.woo-excel-tax-filter .filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.woo-excel-tax-filter .filter-btn {
+    font-size: 11px;
+    padding: 4px 8px;
+    border: none;
+    background: none;
+    color: #2271b1;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+
+.woo-excel-tax-filter .filter-btn:hover {
+    color: #135e96;
+}
+
+/* Gruppo tassonomia */
+#posts-filter .woo-excel-tax-filter .tax-group,
+.woo-excel-tax-filter .tax-group {
+    margin: 0 0 24px 0 !important;
+    padding: 16px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    background: #f9f9f9 !important;
+}
+
+#posts-filter .woo-excel-tax-filter .tax-group:last-child,
+.woo-excel-tax-filter .tax-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Etichetta tassonomia */
+#posts-filter .woo-excel-tax-filter .tax-label,
+.woo-excel-tax-filter .tax-label {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    color: #1d2327 !important;
+    margin-bottom: 10px !important;
+    padding: 6px 8px !important;
+    background: #f6f7f7 !important;
+    border-radius: 3px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+}
+
+.woo-excel-tax-filter .tax-label-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.woo-excel-tax-filter .tax-label-icon {
+    color: #8c8f94;
+    font-size: 14px;
+}
+
+.woo-excel-tax-filter .tax-count {
+    font-size: 11px;
+    font-weight: 400;
+    color: #646970;
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* Container checkbox */
+.woo-excel-tax-filter .checkbox-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    padding-left: 4px;
+}
+
+/* Singola checkbox con label */
+.woo-excel-tax-filter .checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #2c3338;
+    padding: 6px 8px;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.woo-excel-tax-filter .checkbox-label:hover {
+    background: #f6f7f7;
+    color: #2271b1;
+}
+
+/* Checkbox input */
+#posts-filter .woo-excel-tax-filter input[type="checkbox"],
+.woo-excel-tax-filter input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 8px 0 0 !important;
+    cursor: pointer !important;
+    border: 1.5px solid #8c8f94 !important;
+    border-radius: 3px !important;
+    background: #fff !important;
+    flex-shrink: 0 !important;
+    transition: all 0.15s ease !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    position: relative !important;
+}
+
+.woo-excel-tax-filter input[type="checkbox"]:hover {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.woo-excel-tax-filter input[type="checkbox"]:checked {
+    background: #2271b1;
+    border-color: #2271b1;
+}
+
+.woo-excel-tax-filter input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.woo-excel-tax-filter input[type="checkbox"]:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+/* Testo label */
+.woo-excel-tax-filter .checkbox-label-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Footer con pulsante Applica */
+.woo-excel-tax-filter .filter-footer {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #f0f0f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.woo-excel-tax-filter .filter-info {
+    font-size: 12px;
+    color: #646970;
+}
+
+.woo-excel-tax-filter .filter-apply {
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.woo-excel-tax-filter .filter-apply:hover {
+    background: #135e96;
+}
+
+.woo-excel-tax-filter .filter-clear {
+    background: #fff;
+    color: #646970;
+    border: 1px solid #c3c4c7;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.woo-excel-tax-filter .filter-clear:hover {
+    border-color: #8c8f94;
+    color: #2c3338;
+}
+
+/* Stato vuoto */
+.woo-excel-tax-filter .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: #646970;
+}
+
+.woo-excel-tax-filter .empty-state-icon {
+    font-size: 48px;
+    color: #dcdcde;
+    margin-bottom: 12px;
+}
+
+.woo-excel-tax-filter .empty-state-text {
+    font-size: 13px;
+    color: #646970;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .woo-excel-tax-filter .filter-content {
+        min-width: 320px;
+        max-width: calc(100vw - 40px);
+    }
+    
+    .woo-excel-tax-filter .checkbox-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
