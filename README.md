@@ -2,7 +2,7 @@
 
 > Plugin WordPress per importare ed esportare prodotti WooCommerce tramite file Excel.
 
----
+
 
 ## 📋 Cosa Fa Il Plugin
 
