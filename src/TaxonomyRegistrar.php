@@ -6,140 +6,9 @@ namespace WooExcelImporter;
 
 final class TaxonomyRegistrar
 {
-    private const MAX_SLUG_LENGTH = 32;
+    use SecureFormHandler;
 
-    private array $knownTaxonomies = [
-        'QUANTITY PER BOX' => [
-            'slug' => 'quantity_per_box',
-            'hierarchical' => false,
-            'label' => 'Quantity Per Box',
-        ],
-        'DISPOSABLE/REUSABLE' => [
-            'slug' => 'disposable_reusable',
-            'hierarchical' => false,
-            'label' => 'Disposable/Reusable',
-        ],
-        'CATEGORY' => [
-            'slug' => 'product_category',
-            'hierarchical' => true,
-            'label' => 'Category',
-        ],
-        'STEEL & TITANIUM INSTRUMENTS FAMILIES' => [
-            'slug' => 'steel_titanium_instruments',
-            'hierarchical' => false,
-            'label' => 'Steel & Titanium Instruments Families',
-        ],
-        'BACKFLUSH TYPE' => [
-            'slug' => 'backflush_type',
-            'hierarchical' => false,
-            'label' => 'Backflush Type',
-        ],
-        'BACKFLUSH TIP' => [
-            'slug' => 'backflush_tip',
-            'hierarchical' => false,
-            'label' => 'Backflush Tip',
-        ],
-        'BYPASS TYPE' => [
-            'slug' => 'bypass_type',
-            'hierarchical' => false,
-            'label' => 'Bypass Type',
-        ],
-        'CHANDELIERS TYPE' => [
-            'slug' => 'chandeliers_type',
-            'hierarchical' => false,
-            'label' => 'Chandeliers Type',
-        ],
-        'DOSAGE' => [
-            'slug' => 'dosage',
-            'hierarchical' => false,
-            'label' => 'Dosage',
-        ],
-        'PACKAGING' => [
-            'slug' => 'packaging',
-            'hierarchical' => false,
-            'label' => 'Packaging',
-        ],
-        'GAS TYPE' => [
-            'slug' => 'gas_type',
-            'hierarchical' => false,
-            'label' => 'Gas Type',
-        ],
-        'GAUGE' => [
-            'slug' => 'gauge',
-            'hierarchical' => false,
-            'label' => 'Gauge',
-        ],
-        'ILLUMINATION CONNECTOR FOR:' => [
-            'slug' => 'illumination_connector_for',
-            'hierarchical' => false,
-            'label' => 'Illumination Connector For',
-        ],
-        'ILLUMINATION TYPE' => [
-            'slug' => 'illumination_type',
-            'hierarchical' => false,
-            'label' => 'Illumination Type',
-        ],
-        'KNIVES & BLADES' => [
-            'slug' => 'knives_blades',
-            'hierarchical' => false,
-            'label' => 'Knives & Blades',
-        ],
-        'LASER CONNECTOR' => [
-            'slug' => 'laser_connector',
-            'hierarchical' => false,
-            'label' => 'Laser Connector',
-        ],
-        'LASER FIBER' => [
-            'slug' => 'laser_fiber',
-            'hierarchical' => false,
-            'label' => 'Laser Fiber',
-        ],
-        'MIXING RATIO' => [
-            'slug' => 'mixing_ratio',
-            'hierarchical' => false,
-            'label' => 'Mixing Ratio',
-        ],
-        'PIC TYPE' => [
-            'slug' => 'pic_type',
-            'hierarchical' => false,
-            'label' => 'PIC Type',
-        ],
-        'TIP ANGLE' => [
-            'slug' => 'tip_angle',
-            'hierarchical' => false,
-            'label' => 'Tip Angle',
-        ],
-        'TIP TYPE' => [
-            'slug' => 'tip_type',
-            'hierarchical' => false,
-            'label' => 'Tip Type',
-        ],
-        'TUBING TYPE' => [
-            'slug' => 'tubing_type',
-            'hierarchical' => false,
-            'label' => 'Tubing Type',
-        ],
-        'TWEEZER' => [
-            'slug' => 'tweezer',
-            'hierarchical' => false,
-            'label' => 'Tweezer',
-        ],
-        'TWEEZER TYPE' => [
-            'slug' => 'tweezer_type',
-            'hierarchical' => false,
-            'label' => 'Tweezer Type',
-        ],
-        'USE FOR' => [
-            'slug' => 'use_for',
-            'hierarchical' => false,
-            'label' => 'Use For',
-        ],
-        '% NaCl' => [
-            'slug' => 'nacl_percentage',
-            'hierarchical' => false,
-            'label' => '% NaCl',
-        ],
-    ];
+    private const MAX_SLUG_LENGTH = 32;
 
     public function register(): void
     {
@@ -198,12 +67,12 @@ final class TaxonomyRegistrar
 
     private function getAllTaxonomies(): array
     {
-        return array_merge($this->knownTaxonomies, $this->getCustomTaxonomies());
+        return array_merge(TaxonomyConfig::getKnownTaxonomies(), $this->getCustomTaxonomies());
     }
 
     private function getKnownTaxonomies(): array
     {
-        return $this->knownTaxonomies;
+        return TaxonomyConfig::getKnownTaxonomies();
     }
 
     private function getCustomTaxonomies(): array
@@ -441,72 +310,24 @@ final class TaxonomyRegistrar
 
     public function renderTaxonomyScript(): void
     {
-        ?>
-        <script>
-        jQuery(document).ready(function($) {
-            // Use event delegation to handle all taxonomy meta boxes with single handler
-            $(document).on('click', '.woo-excel-add-new-term', function(e) {
-                e.preventDefault();
-                var taxonomy = $(this).data('taxonomy');
-                $('#new-term-' + taxonomy).slideToggle();
-            });
-            
-            $(document).on('click', '.woo-excel-cancel-term', function() {
-                $(this).closest('.woo-excel-new-term-form').slideUp();
-                $(this).siblings('input').val('');
-            });
-            
-            $(document).on('click', '.woo-excel-save-term', function() {
-                var button = $(this);
-                var taxonomy = button.data('taxonomy');
-                var termName = $('#new-term-name-' + taxonomy).val().trim();
-                var spinner = button.siblings('.spinner');
-                
-                if (!termName) {
-                    alert('<?php esc_html_e('Inserisci un nome per il termine', 'woo-excel-importer'); ?>');
-                    return;
-                }
-                
-                spinner.addClass('is-active');
-                button.prop('disabled', true);
-                
-                $.ajax({
-                    url: ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'woo_excel_add_term',
-                        taxonomy: taxonomy,
-                        term_name: termName,
-                        nonce: '<?php echo wp_create_nonce('woo_excel_add_term'); ?>'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            var select = $('#' + taxonomy + '_selector');
-                            var option = $('<option>', {
-                                value: response.data.term_id,
-                                text: response.data.name,
-                                selected: true
-                            });
-                            select.append(option);
-                            
-                            $('#new-term-name-' + taxonomy).val('');
-                            $('#new-term-' + taxonomy).slideUp();
-                        } else {
-                            alert(response.data.message || '<?php esc_html_e('Errore durante la creazione del termine', 'woo-excel-importer'); ?>');
-                        }
-                    },
-                    error: function() {
-                        alert('<?php esc_html_e('Errore di connessione', 'woo-excel-importer'); ?>');
-                    },
-                    complete: function() {
-                        spinner.removeClass('is-active');
-                        button.prop('disabled', false);
-                    }
-                });
-            });
-        });
-        </script>
-        <?php
+        // Enqueue external JavaScript file
+        wp_enqueue_script(
+            'woo-excel-taxonomy',
+            WOO_EXCEL_IMPORTER_URL . 'assets/admin.js',
+            ['jquery'],
+            WOO_EXCEL_IMPORTER_VERSION,
+            true
+        );
+
+        // Localize script with translations and nonce
+        wp_localize_script('woo-excel-taxonomy', 'wooExcelImporter', [
+            'addTermNonce' => wp_create_nonce('woo_excel_add_term'),
+            'i18n' => [
+                'enterTermName' => __('Inserisci un nome per il termine', 'woo-excel-importer'),
+                'errorCreatingTerm' => __('Errore durante la creazione del termine', 'woo-excel-importer'),
+                'connectionError' => __('Errore di connessione', 'woo-excel-importer'),
+            ],
+        ]);
     }
 
     public function getTaxonomySlug(string $columnName): ?string
@@ -581,15 +402,9 @@ final class TaxonomyRegistrar
 
     public function ajaxAddTerm(): void
     {
-        // Verify nonce
-        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'woo_excel_add_term')) {
-            wp_send_json_error(['message' => 'Nonce verification failed']);
-            return;
-        }
-
-        // Check user permissions
-        if (!current_user_can('manage_woocommerce')) {
-            wp_send_json_error(['message' => 'Insufficient permissions']);
+        // Verify security using trait method
+        if (!$this->isSecureAjaxRequest('nonce', 'woo_excel_add_term', 'manage_woocommerce')) {
+            wp_send_json_error(['message' => 'Security check failed']);
             return;
         }
 

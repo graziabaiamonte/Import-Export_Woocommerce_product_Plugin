@@ -12,6 +12,7 @@ use WC_Product_Simple;
 final class ExcelWriter
 {
     private TaxonomyRegistrar $taxonomyRegistrar;
+    private TaxonomyService $taxonomyService;
 
     private const REQUIRED_HEADERS = [
         'SKU',
@@ -20,9 +21,10 @@ final class ExcelWriter
         'PRICE',
     ];
 
-    public function __construct(TaxonomyRegistrar $taxonomyRegistrar)
+    public function __construct(TaxonomyRegistrar $taxonomyRegistrar, TaxonomyService $taxonomyService)
     {
         $this->taxonomyRegistrar = $taxonomyRegistrar;
+        $this->taxonomyService = $taxonomyService;
     }
 
     public function createExcel(array $products): Spreadsheet
@@ -87,21 +89,10 @@ final class ExcelWriter
                 continue;
             }
 
-            $termName = $this->getProductTermName($product->get_id(), $taxonomySlug);
+            $termName = $this->taxonomyService->getProductTermName($product->get_id(), $taxonomySlug);
             $cellCoord = $this->getColumnLetter($column++) . $row;
             $sheet->setCellValue($cellCoord, $termName);
         }
-    }
-
-    private function getProductTermName(int $productId, string $taxonomySlug): string
-    {
-        $terms = wp_get_post_terms($productId, $taxonomySlug, ['fields' => 'names']);
-
-        if (is_wp_error($terms) || empty($terms)) {
-            return '';
-        }
-
-        return (string) $terms[0];
     }
 
     public function saveToFile(Spreadsheet $spreadsheet, string $filePath): void

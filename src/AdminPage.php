@@ -6,6 +6,8 @@ namespace WooExcelImporter;
 
 final class AdminPage
 {
+    use SecureFormHandler;
+
     private const MENU_SLUG = 'woo-excel-importer';
     private const CAPABILITY = 'manage_woocommerce';
     private const NONCE_ACTION_IMPORT = 'woo_excel_import';
@@ -34,89 +36,19 @@ final class AdminPage
 
     public function renderPage(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'woo-excel-importer'));
-        }
+        $this->verifyCapability(self::CAPABILITY);
 
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html__('WooCommerce Excel Import/Export', 'woo-excel-importer'); ?></h1>
-            
-            <p style="margin-bottom: 20px;">
-                <a href="<?php echo esc_url(admin_url('admin.php?page=woo-excel-importer-settings')); ?>" class="button button-secondary">
-                    ⚙️ <?php echo esc_html__('Plugin Settings', 'woo-excel-importer'); ?>
-                </a>
-            </p>
+        $data = [
+            'settingsUrl' => admin_url('admin.php?page=woo-excel-importer-settings'),
+            'notices' => $this->getNotices(),
+        ];
 
-            <?php $this->renderNotices(); ?>
-
-            <div class="woo-excel-importer-container">
-                <div class="card" style="max-width: 800px;">
-                    <h2><?php echo esc_html__('Import Products from Excel', 'woo-excel-importer'); ?></h2>
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
-                        <input type="hidden" name="action" value="woo_excel_import">
-                        <?php wp_nonce_field(self::NONCE_ACTION_IMPORT, 'woo_excel_import_nonce'); ?>
-                        
-                        <table class="form-table">
-                            <tr>
-                                <th scope="row">
-                                    <label for="excel_file"><?php echo esc_html__('Excel File', 'woo-excel-importer'); ?></label>
-                                </th>
-                                <td>
-                                    <input type="file" name="excel_file" id="excel_file" required accept=".xls,.xlsx,.csv">
-                                    <p class="description">
-                                        <?php echo esc_html__('Upload an Excel file (.xls, .xlsx, .csv). Maximum size: 10MB', 'woo-excel-importer'); ?>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <?php submit_button(__('Import Products', 'woo-excel-importer'), 'primary', 'submit_import'); ?>
-                    </form>
-                </div>
-
-                <div class="card" style="max-width: 800px; margin-top: 20px;">
-                    <h2><?php echo esc_html__('Export Products to Excel', 'woo-excel-importer'); ?></h2>
-                    <p><?php echo esc_html__('Export all WooCommerce products to an Excel file that can be re-imported without modifications.', 'woo-excel-importer'); ?></p>
-                    
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                        <input type="hidden" name="action" value="woo_excel_export">
-                        <?php wp_nonce_field(self::NONCE_ACTION_EXPORT, 'woo_excel_export_nonce'); ?>
-                        
-                        <?php submit_button(__('Export Products', 'woo-excel-importer'), 'secondary', 'submit_export'); ?>
-                    </form>
-                </div>
-
-                <div class="card" style="max-width: 800px; margin-top: 20px;">
-                    <h2><?php echo esc_html__('Excel File Format', 'woo-excel-importer'); ?></h2>
-                    <p><?php echo esc_html__('The Excel file must have the following columns in this exact order:', 'woo-excel-importer'); ?></p>
-                    <ol style="font-family: monospace; font-size: 12px;">
-                        <li>SKU;</li>
-                        <li>TITLE;</li>
-                        <li>DESCRIPTION;</li>
-                        <li>PRICE;</li>
-                        <li>QUANTITY PER BOX;</li>
-                        <li>DISPOSABLE/REUSABLE;</li>
-                        <li>CATEGORY;</li>
-                        <li>STEEL & TITANIUM INSTRUMENTS FAMILIES;</li>
-                        <li>And 18 more taxonomy columns...</li>
-                    </ol>
-                    <p><?php echo esc_html__('Use the Export function to generate a correctly formatted file.', 'woo-excel-importer'); ?></p>
-                </div>
-            </div>
-        </div>
-        <?php
+        $this->renderView('admin-page', $data);
     }
 
     public function handleImport(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('You do not have sufficient permissions to perform this action.', 'woo-excel-importer'));
-        }
-
-        if (!isset($_POST['woo_excel_import_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woo_excel_import_nonce'])), self::NONCE_ACTION_IMPORT)) {
-            wp_die(esc_html__('Security check failed. Please try again.', 'woo-excel-importer'));
-        }
+        $this->verifySecureRequest('woo_excel_import_nonce', self::NONCE_ACTION_IMPORT, self::CAPABILITY);
 
         if (!isset($_FILES['excel_file'])) {
             $this->redirectWithError(__('No file was uploaded. Please select an Excel file and try again.', 'woo-excel-importer'));
@@ -169,13 +101,7 @@ final class AdminPage
 
     public function handleExport(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('You do not have sufficient permissions to perform this action.', 'woo-excel-importer'));
-        }
-
-        if (!isset($_POST['woo_excel_export_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woo_excel_export_nonce'])), self::NONCE_ACTION_EXPORT)) {
-            wp_die(esc_html__('Security check failed.', 'woo-excel-importer'));
-        }
+        $this->verifySecureRequest('woo_excel_export_nonce', self::NONCE_ACTION_EXPORT, self::CAPABILITY);
 
         try {
             $this->exportService->exportAllProducts();
@@ -212,11 +138,13 @@ final class AdminPage
         set_transient('woo_excel_import_report', $report, 300);
     }
 
-    private function renderNotices(): void
+    private function getNotices(): array
     {
+        $notices = [];
+
         if (isset($_GET['import_error'])) {
             $error = sanitize_text_field(wp_unslash($_GET['import_error']));
-            printf(
+            $notices[] = sprintf(
                 '<div class="notice notice-error is-dismissible"><p>%s</p></div>',
                 wp_kses_post($error)
             );
@@ -226,26 +154,29 @@ final class AdminPage
             $report = get_transient('woo_excel_import_report');
             
             if ($report instanceof ImportReport) {
-                $this->renderImportReport($report);
+                $notices[] = $this->buildImportReport($report);
                 delete_transient('woo_excel_import_report');
             } else {
                 $message = isset($_GET['import_message']) 
                     ? sanitize_text_field(wp_unslash($_GET['import_message'])) 
                     : __('Import completed.', 'woo-excel-importer');
                 
-                printf(
+                $notices[] = sprintf(
                     '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
                     esc_html($message)
                 );
             }
         }
+
+        return $notices;
     }
 
-    private function renderImportReport(ImportReport $report): void
+    private function buildImportReport(ImportReport $report): string
     {
         $hasWarnings = $report->getRowsIgnored() > 0;
         $noticeClass = $hasWarnings ? 'notice-warning' : 'notice-success';
         
+        ob_start();
         ?>
         <div class="notice <?php echo esc_attr($noticeClass); ?> is-dismissible">
             <h3><?php echo esc_html__('Import Completed', 'woo-excel-importer'); ?></h3>
@@ -324,6 +255,23 @@ final class AdminPage
             <?php endif; ?>
         </div>
         <?php
+        return ob_get_clean();
+    }
+
+    private function renderView(string $template, array $data = []): void
+    {
+        extract($data, EXTR_SKIP);
+        
+        $viewPath = WOO_EXCEL_IMPORTER_PATH . 'views/' . $template . '.php';
+        
+        if (file_exists($viewPath)) {
+            include $viewPath;
+        } else {
+            wp_die(sprintf(
+                esc_html__('Template file not found: %s', 'woo-excel-importer'),
+                esc_html($template)
+            ));
+        }
     }
 
     public function enqueueAssets(string $hook): void
