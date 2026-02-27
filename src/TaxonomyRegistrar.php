@@ -159,6 +159,43 @@ final class TaxonomyRegistrar
         add_action('pre_get_posts', [$this, 'applyProductFilters']);
     }
 
+    /**
+     * Register taxonomies on plugin activation.
+     * Skips taxonomies that already exist and are connected to product post type.
+     */
+    public function registerOnActivation(): void
+    {
+        foreach ($this->getAllTaxonomies() as $config) {
+            $slug = $config['slug'];
+            
+            // Skip if taxonomy already exists and is connected to product
+            if (taxonomy_exists($slug) && $this->isTaxonomyConnectedToProduct($slug)) {
+                continue;
+            }
+            
+            // Register or connect the taxonomy
+            $this->registerTaxonomy($config);
+        }
+    }
+
+    /**
+     * Check if a taxonomy is already connected to the product post type.
+     */
+    private function isTaxonomyConnectedToProduct(string $taxonomy): bool
+    {
+        if (!taxonomy_exists($taxonomy)) {
+            return false;
+        }
+
+        $tax_object = get_taxonomy($taxonomy);
+        
+        if (!$tax_object || empty($tax_object->object_type)) {
+            return false;
+        }
+
+        return in_array('product', $tax_object->object_type, true);
+    }
+
     private function getAllTaxonomies(): array
     {
         return array_merge($this->knownTaxonomies, $this->getCustomTaxonomies());

@@ -47,7 +47,8 @@ final class Plugin
             );
         }
 
-        $this->taxonomyRegistrar->register();
+        // Register taxonomies, skipping those already connected to product post type
+        $this->taxonomyRegistrar->registerOnActivation();
         flush_rewrite_rules();
     }
 

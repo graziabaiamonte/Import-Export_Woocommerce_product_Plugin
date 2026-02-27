@@ -90,7 +90,18 @@ else
 fi
 
 # Pulizia directory temporanea
-rm -rf "${TEMP_DIR}"
+echo -e "${YELLOW}→${NC} Rimozione directory temporanea..."
+cd "${PLUGIN_DIR}"
+if [ -d "${TEMP_DIR}" ]; then
+    rm -rf "${TEMP_DIR}"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} Directory temporanea rimossa"
+    else
+        echo -e "${YELLOW}⚠${NC} Impossibile rimuovere la directory temporanea"
+    fi
+else
+    echo -e "${GREEN}✓${NC} Nessuna directory temporanea da rimuovere"
+fi
 
 # Informazioni finali
 FILE_SIZE=$(du -h "${OUTPUT_FILE}" | cut -f1)
