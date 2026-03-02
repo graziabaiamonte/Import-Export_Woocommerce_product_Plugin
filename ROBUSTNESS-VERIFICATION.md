@@ -242,3 +242,23 @@ Il plugin gestisce **tutti** gli scenari di errore possibili:
 Build: `woocommerce-excel-importer.zip` (1.5M)  
 Status: ✅ **VERIFIED & READY FOR PRODUCTION**  
 Data: 26 febbraio 2026
+
+
+
+
+
+
+
+
+
+### 📚 Principi SOLID Applicati
+
+| Principio | Come Applicato |
+|-----------|----------------|
+| **S**ingle Responsibility | Ogni classe ha un solo motivo per cambiare (AdminPage→UI, ImportService→business logic) |
+| **O**pen/Closed | Estendibile senza modificare codice esistente (es. TaxonomyConfig) |
+| **L**iskov Substitution | I service sono sostituibili con mock nei test |
+| **I**nterface Segregation | Trait SecureFormHandler fornisce solo metodi necessari |
+| **D**ependency Inversion | Dipendenze iniettate, non istanziate internamente |
+
+---
