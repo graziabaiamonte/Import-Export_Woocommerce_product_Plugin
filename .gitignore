@@ -1,9 +1,8 @@
 /vendor/
 /node_modules/
-/build/
 .DS_Store
 .vscode/
 *.log
-*.zip
+
 composer.lock
 SPECIFICHE.md
