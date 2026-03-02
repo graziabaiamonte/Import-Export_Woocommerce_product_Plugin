@@ -58,6 +58,7 @@ cp -r "${PLUGIN_DIR}/views" "${TEMP_DIR}/"
 cp "${PLUGIN_DIR}/plugin.php" "${TEMP_DIR}/"
 cp "${PLUGIN_DIR}/composer.json" "${TEMP_DIR}/"
 cp "${PLUGIN_DIR}/README.md" "${TEMP_DIR}/"
+cp "${PLUGIN_DIR}/uninstall.php" "${TEMP_DIR}/" 
 echo -e "${GREEN}✓${NC} File copiati"
 
 # Installazione dipendenze Composer
