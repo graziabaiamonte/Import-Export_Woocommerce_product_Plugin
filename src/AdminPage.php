@@ -39,7 +39,6 @@ final class AdminPage
         $this->verifyCapability(self::CAPABILITY);
 
         $data = [
-            'settingsUrl' => admin_url('admin.php?page=woo-excel-importer-settings'),
             'notices' => $this->getNotices(),
         ];
 

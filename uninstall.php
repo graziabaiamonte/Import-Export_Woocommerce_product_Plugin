@@ -3,7 +3,9 @@
  * Uninstall script for WooCommerce Excel Import/Export
  * 
  * This file is executed when the plugin is uninstalled via WordPress admin.
- * It checks the user's settings and optionally removes all plugin data.
+ * It automatically removes all plugin data including custom taxonomies and their terms.
+ * 
+ * NOTE: Products are NEVER deleted, only the taxonomy data is removed.
  */
 
 declare(strict_types=1);
@@ -13,20 +15,12 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-// Check if user wants to delete data on uninstall
-$deleteOnUninstall = get_option('woo_excel_importer_delete_on_uninstall', 'no');
-
-if ($deleteOnUninstall !== 'yes') {
-    // User wants to keep data, exit without deleting anything
-    return;
-}
-
 // Delete plugin options
-delete_option('woo_excel_importer_delete_on_uninstall');
 delete_option('woo_excel_importer_custom_taxonomies');
 
-// Get all registered taxonomies from the plugin
+// Get all custom taxonomies from the plugin (including old versions with dashes)
 $taxonomySlugs = [
+    // Current version (with underscores)
     'quantity_per_box',
     'disposable_reusable',
     'product_category',
@@ -53,53 +47,89 @@ $taxonomySlugs = [
     'tweezer_type',
     'use_for',
     'nacl_percentage',
+    // Old versions (with dashes) - for backward compatibility
+    'quantity-per-box',
+    'disposable-reusable',
+    'steel-titanium-families',
+    'backflush-type',
+    'backflush-tip',
+    'packaging-gas-gauge',
+    'knives-blades',
+    'tip-angle',
+    'tip-type',
+    'tubing-type',
+    'use-for',
+    'nacl-percentage',
 ];
 
-// Delete all terms and taxonomy data
-foreach ($taxonomySlugs as $taxonomy) {
-    if (!taxonomy_exists($taxonomy)) {
-        continue;
-    }
-
-    // Get all terms
-    $terms = get_terms([
-        'taxonomy' => $taxonomy,
-        'hide_empty' => false,
-        'fields' => 'ids',
-    ]);
-
-    if (is_array($terms)) {
-        foreach ($terms as $termId) {
-            wp_delete_term($termId, $taxonomy);
-        }
-    }
-
-    // Unregister taxonomy
-    unregister_taxonomy($taxonomy);
-}
-
-// Clean up term relationships (remove orphaned data)
+// Direct database cleanup - the plugin is already deactivated at this point
+// so we can't use WordPress functions that require registered taxonomies
 global $wpdb;
 
-// Remove term taxonomy entries for our taxonomies
+// Log file for debugging (optional - can be removed after testing)
+$log_file = WP_CONTENT_DIR . '/woo-excel-uninstall.log';
+file_put_contents($log_file, date('Y-m-d H:i:s') . " - Starting uninstall\n", FILE_APPEND);
+
+// Prepare taxonomy list for SQL
 $taxonomyList = "'" . implode("','", array_map('esc_sql', $taxonomySlugs)) . "'";
-$wpdb->query(
+
+file_put_contents($log_file, "Taxonomy list: {$taxonomyList}\n", FILE_APPEND);
+
+// Step 1: Get term_taxonomy_ids that need to be deleted
+$term_taxonomy_ids = $wpdb->get_col(
+    "SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE taxonomy IN ({$taxonomyList})"
+);
+
+file_put_contents($log_file, "Found " . count($term_taxonomy_ids) . " term_taxonomy entries\n", FILE_APPEND);
+
+// Step 2: Delete term relationships for these taxonomies
+if (!empty($term_taxonomy_ids)) {
+    $ids_list = implode(',', array_map('intval', $term_taxonomy_ids));
+    $deleted_relationships = $wpdb->query(
+        "DELETE FROM {$wpdb->term_relationships} WHERE term_taxonomy_id IN ({$ids_list})"
+    );
+    file_put_contents($log_file, "Deleted {$deleted_relationships} term relationships\n", FILE_APPEND);
+}
+
+// Step 3: Get term_ids before deleting term_taxonomy entries
+$term_ids = $wpdb->get_col(
+    "SELECT term_id FROM {$wpdb->term_taxonomy} WHERE taxonomy IN ({$taxonomyList})"
+);
+
+// Step 4: Delete term_taxonomy entries
+$deleted_taxonomies = $wpdb->query(
     "DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy IN ({$taxonomyList})"
 );
 
-// Remove orphaned term_relationships
+file_put_contents($log_file, "Deleted {$deleted_taxonomies} term_taxonomy entries\n", FILE_APPEND);
+
+// Step 5: Delete terms that are no longer used by any taxonomy
+if (!empty($term_ids)) {
+    foreach ($term_ids as $term_id) {
+        // Check if term is still used by other taxonomies
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE term_id = %d",
+                $term_id
+            )
+        );
+        
+        // If term is not used anymore, delete it
+        if ($count == 0) {
+            $wpdb->delete($wpdb->terms, ['term_id' => $term_id], ['%d']);
+            $wpdb->delete($wpdb->termmeta, ['term_id' => $term_id], ['%d']);
+        }
+    }
+}
+
+// Step 6: Clean up any remaining orphaned relationships
 $wpdb->query(
     "DELETE tr FROM {$wpdb->term_relationships} tr
     LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
     WHERE tt.term_taxonomy_id IS NULL"
 );
 
-// Remove orphaned terms
-$wpdb->query(
-    "DELETE t FROM {$wpdb->terms} t
-    LEFT JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-    WHERE tt.term_id IS NULL"
-);
+file_put_contents($log_file, date('Y-m-d H:i:s') . " - Uninstall completed\n", FILE_APPEND);
 
 // Note: We do NOT delete products, only the custom taxonomies and their terms
 // Products remain intact in WooCommerce

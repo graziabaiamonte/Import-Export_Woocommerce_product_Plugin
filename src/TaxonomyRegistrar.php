@@ -65,6 +65,69 @@ final class TaxonomyRegistrar
         return in_array('product', $tax_object->object_type, true);
     }
 
+    /**
+     * Clean orphaned terms (terms not associated with any product).
+     * Called on plugin deactivation to keep database clean.
+     */
+    public function cleanOrphanedTerms(): void
+    {
+        foreach ($this->getAllTaxonomies() as $config) {
+            $taxonomy = $config['slug'];
+            
+            if (!taxonomy_exists($taxonomy)) {
+                continue;
+            }
+
+            // Get all terms for this taxonomy
+            $terms = get_terms([
+                'taxonomy' => $taxonomy,
+                'hide_empty' => false,
+                'fields' => 'ids',
+            ]);
+
+            if (is_wp_error($terms) || empty($terms)) {
+                continue;
+            }
+
+            // Check each term and delete if not associated with any product
+            foreach ($terms as $term_id) {
+                $count = $this->getTermProductCount($term_id, $taxonomy);
+                
+                // If term has no products, delete it
+                if ($count === 0) {
+                    wp_delete_term($term_id, $taxonomy);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the number of products associated with a term.
+     * 
+     * @param int $term_id Term ID
+     * @param string $taxonomy Taxonomy slug
+     * @return int Number of products
+     */
+    private function getTermProductCount(int $term_id, string $taxonomy): int
+    {
+        $args = [
+            'post_type' => 'product',
+            'post_status' => 'any',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'tax_query' => [
+                [
+                    'taxonomy' => $taxonomy,
+                    'field' => 'term_id',
+                    'terms' => $term_id,
+                ],
+            ],
+        ];
+
+        $query = new \WP_Query($args);
+        return $query->found_posts;
+    }
+
     private function getAllTaxonomies(): array
     {
         return array_merge(TaxonomyConfig::getKnownTaxonomies(), $this->getCustomTaxonomies());

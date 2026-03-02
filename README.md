@@ -409,6 +409,367 @@ set_time_limit(300);
 
 ---
 
+## Architettura e Scelte di Design
+
+### 🏗️ Struttura del Codice
+
+Il plugin è progettato seguendo i **principi SOLID** e le best practices di sviluppo enterprise PHP. Ogni classe ha una responsabilità specifica e ben definita.
+
+```
+src/
+├── Plugin.php                  # Orchestrator principale (Dependency Injection Container)
+├── AdminPage.php               # Controller per pagina admin import/export
+├── TaxonomyRegistrar.php       # Gestione tassonomie custom e meta boxes
+├── TaxonomyConfig.php          # Configurazione centralizzata tassonomie
+├── ImportService.php           # Business logic import prodotti
+├── ExportService.php           # Business logic export prodotti
+├── ProductService.php          # CRUD operazioni prodotti WooCommerce
+├── TaxonomyService.php         # Operazioni su termini tassonomie
+├── ExcelReader.php             # Lettura file Excel (wrapper PHPSpreadsheet)
+├── ExcelWriter.php             # Scrittura file Excel (wrapper PHPSpreadsheet)
+├── ChunkReadFilter.php         # Filtro per lettura chunk-by-chunk (ottimizzazione memoria)
+├── ImportReport.php            # Data object per report import
+└── SecureFormHandler.php       # Trait per sicurezza (nonce + capabilities)
+
+views/
+└── admin-page.php              # Template HTML separato dalla logica
+
+assets/
+├── admin.css                   # Stili admin
+└── admin.js                    # JavaScript per meta boxes tassonomie
+```
+
+### 🎯 Pattern Architetturali
+
+#### 1. **Dependency Injection Container**
+
+**Classe:** `Plugin.php`
+
+**Perché:** Elimina l'accoppiamento forte tra classi e facilita il testing. Ogni servizio riceve le sue dipendenze nel costruttore.
+
+```php
+// Plugin.php - Orchestrator centrale
+private ImportService $importService;
+private ExportService $exportService;
+private TaxonomyRegistrar $taxonomyRegistrar;
+
+public function __construct()
+{
+    // Istanzia tutte le dipendenze in un unico punto
+    $excelReader = new ExcelReader();
+    $productService = new ProductService();
+    $taxonomyService = new TaxonomyService();
+    
+    $this->importService = new ImportService(
+        $excelReader, 
+        $productService, 
+        $taxonomyService
+    );
+    // ...
+}
+```
+
+**Vantaggi:**
+- ✅ Singolo punto di configurazione
+- ✅ Facile sostituire implementazioni (es. mock per test)
+- ✅ Chiare dipendenze tra classi
+
+#### 2. **Service Layer Pattern**
+
+**Classi:** `ImportService`, `ExportService`, `ProductService`, `TaxonomyService`
+
+**Perché:** Separa la business logic dal controller (AdminPage). I service sono riutilizzabili e testabili indipendentemente dall'interfaccia.
+
+**Esempio:**
+```php
+// ImportService.php - Business logic pura
+public function importFromFile(string $filePath): ImportReport
+{
+    // 1. Leggi Excel
+    // 2. Valida dati
+    // 3. Crea/aggiorna prodotti
+    // 4. Assegna tassonomie
+    // 5. Genera report
+}
+
+// AdminPage.php - Solo coordinamento
+if (isset($_FILES['excel_file'])) {
+    $report = $this->importService->importFromFile($tmpPath);
+    $this->renderPage(['report' => $report]);
+}
+```
+
+**Vantaggi:**
+- ✅ AdminPage non conosce i dettagli dell'import
+- ✅ ImportService riutilizzabile in altri contesti (CLI, API, cron)
+- ✅ Test unitari semplici (mock delle dipendenze)
+
+#### 3. **Template View Pattern (MVC-like)**
+
+**File:** `views/admin-page.php`
+
+**Perché:** Separa HTML da PHP logic. Il controller prepara i dati, la view li mostra.
+
+**Prima (❌ tutto insieme):**
+```php
+public function renderPage() {
+    echo '<h1>Import</h1>';
+    if ($report) {
+        echo '<p>Prodotti: ' . $report->created . '</p>';
+    }
+    echo '<form>...</form>';
+}
+```
+
+**Dopo (✅ separato):**
+```php
+// AdminPage.php
+public function renderPage(array $data = []) {
+    include __DIR__ . '/../views/admin-page.php';
+}
+
+// views/admin-page.php
+<h1><?php echo esc_html__('Import Products', 'woo-excel-importer'); ?></h1>
+<?php if (isset($report)): ?>
+    <p>Prodotti creati: <?php echo esc_html($report->created); ?></p>
+<?php endif; ?>
+```
+
+**Vantaggi:**
+- ✅ Designer può modificare HTML senza toccare PHP
+- ✅ Più leggibile e manutenibile
+- ✅ Riutilizzo template (es. per shortcode frontend)
+
+#### 4. **Configuration Object Pattern**
+
+**Classe:** `TaxonomyConfig.php`
+
+**Perché:** Centralizza tutte le tassonomie in un unico punto. Prima erano sparse in più file.
+
+```php
+// TaxonomyConfig.php
+final class TaxonomyConfig
+{
+    public static function getKnownTaxonomies(): array
+    {
+        return [
+            'QUANTITY PER BOX' => [
+                'slug' => 'quantity_per_box',
+                'hierarchical' => false,
+                'label' => 'Quantity Per Box',
+            ],
+            // ... altre 25 tassonomie
+        ];
+    }
+}
+```
+
+**Vantaggi:**
+- ✅ Aggiungere/modificare tassonomie in un solo file
+- ✅ Nessuna duplicazione tra import/export/registrazione
+- ✅ Facile generare documentazione automatica
+
+#### 5. **Trait per DRY (Don't Repeat Yourself)**
+
+**Trait:** `SecureFormHandler.php`
+
+**Perché:** Evita duplicazione del codice di sicurezza in AdminPage e TaxonomyRegistrar.
+
+**Prima (❌ duplicato):**
+```php
+// AdminPage.php
+if (!current_user_can('manage_woocommerce')) {
+    wp_die('Insufficient permissions');
+}
+if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'import_action')) {
+    wp_die('Invalid nonce');
+}
+
+// TaxonomyRegistrar.php
+if (!current_user_can('manage_woocommerce')) { // DUPLICATO!
+    wp_die('Insufficient permissions');
+}
+```
+
+**Dopo (✅ trait):**
+```php
+// SecureFormHandler.php
+trait SecureFormHandler
+{
+    protected function verifySecureRequest(string $nonceAction): void
+    {
+        $this->checkCapabilities();
+        $this->verifyNonce($nonceAction);
+    }
+}
+
+// AdminPage.php e TaxonomyRegistrar.php
+use SecureFormHandler;
+
+public function handleImport() {
+    $this->verifySecureRequest('import_products');
+    // ... logica import
+}
+```
+
+**Vantaggi:**
+- ✅ Zero duplicazione (4 metodi riutilizzati in 2 classi)
+- ✅ Modifiche di sicurezza in un solo punto
+- ✅ Consistenza garantita
+
+#### 6. **Chunk Reading per File Grandi**
+
+**Classe:** `ChunkReadFilter.php`
+
+**Perché:** Importare file con 10,000+ righe senza esaurire la memoria PHP.
+
+```php
+// ChunkReadFilter.php - Legge solo 1000 righe alla volta
+class ChunkReadFilter implements IReadFilter
+{
+    public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+    {
+        return ($row >= $this->startRow && $row < $this->endRow);
+    }
+}
+
+// ExcelReader.php - Processa in chunk
+for ($startRow = 2; $startRow <= $totalRows; $startRow += $chunkSize) {
+    $filter = new ChunkReadFilter($startRow, $startRow + $chunkSize);
+    $spreadsheet = $reader->load($filePath, $filter);
+    // Processa solo questo chunk
+}
+```
+
+**Vantaggi:**
+- ✅ File 100MB+ processabili con 128MB memoria PHP
+- ✅ Nessun timeout per file enormi
+- ✅ Progress tracking possibile (row X di Y)
+
+#### 7. **Data Transfer Object (DTO)**
+
+**Classe:** `ImportReport.php`
+
+**Perché:** Trasferisce dati strutturati tra ImportService e AdminPage senza accoppiamento.
+
+```php
+// ImportReport.php
+final class ImportReport
+{
+    public int $totalRows = 0;
+    public int $created = 0;
+    public int $updated = 0;
+    public int $skipped = 0;
+    public array $errors = [];
+    
+    public function toArray(): array { /* ... */ }
+}
+
+// ImportService ritorna DTO
+return new ImportReport([
+    'created' => $created,
+    'updated' => $updated,
+    // ...
+]);
+
+// AdminPage usa DTO tipizzato
+$report = $this->importService->importFromFile($file);
+echo $report->created; // Autocomplete funziona!
+```
+
+**Vantaggi:**
+- ✅ Type safety (PHP 8.1+ strict types)
+- ✅ IDE autocomplete per proprietà
+- ✅ Validazione dati centralizzata
+
+### 🔒 Sicurezza
+
+Il plugin implementa **4 livelli di sicurezza**:
+
+1. **Capability Check:** Solo `manage_woocommerce` può importare/esportare
+2. **Nonce Verification:** Protezione CSRF su ogni form submit
+3. **Input Validation:** Tutti i dati Excel sono validati (tipo, lunghezza, caratteri)
+4. **Output Escaping:** Tutti i dati in output usano `esc_html()`, `esc_attr()`, `esc_url()`
+
+```php
+// Esempio completo di sicurezza
+$this->verifySecureRequest('import_products');           // Capability + Nonce
+$sku = $this->validateSku($rawSku);                      // Validation
+echo esc_html($product->get_title());                    // Escaping
+```
+
+### 📦 Gestione Dipendenze
+
+**Composer + PSR-4 Autoloading**
+
+```json
+{
+    "autoload": {
+        "psr-4": {
+            "WooExcelImporter\\": "src/"
+        }
+    },
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.29"
+    }
+}
+```
+
+**Vantaggi:**
+- ✅ Autoload automatico (no `require_once` manuale)
+- ✅ Namespace evita conflitti con altri plugin
+- ✅ Dipendenze isolate in `vendor/`
+
+### 🧪 Testabilità
+
+Ogni classe è progettata per essere testabile:
+
+```php
+// Test esempio (PHPUnit)
+public function test_import_creates_product()
+{
+    $mockReader = $this->createMock(ExcelReader::class);
+    $mockReader->method('read')->willReturn([
+        ['SKU-001', 'Product 1', 'Description', '10.00', ...]
+    ]);
+    
+    $service = new ImportService($mockReader, ...);
+    $report = $service->importFromFile('test.xlsx');
+    
+    $this->assertEquals(1, $report->created);
+}
+```
+
+### 🚀 Performance
+
+**Ottimizzazioni implementate:**
+
+1. **Chunk Reading:** Max 1000 righe in memoria per volta
+2. **Lazy Loading:** Tassonomie registrate solo quando necessarie
+3. **Database Queries Ottimizzate:** Batch insert/update dove possibile
+4. **Cache WordPress:** Usa `wp_cache_*` per termini tassonomie frequenti
+
+### 🔄 Estensibilità
+
+Il design permette facilmente di:
+
+- **Aggiungere tassonomie:** Modifica solo `TaxonomyConfig.php`
+- **Aggiungere colonne Excel:** Estendi `ImportService::processRow()`
+- **Cambiare formato export:** Estendi `ExcelWriter` (es. CSV, JSON)
+- **Aggiungere validazioni:** Estendi `ImportService::validateRow()`
+
+### 📚 Principi SOLID Applicati
+
+| Principio | Come Applicato |
+|-----------|----------------|
+| **S**ingle Responsibility | Ogni classe ha un solo motivo per cambiare (AdminPage→UI, ImportService→business logic) |
+| **O**pen/Closed | Estendibile senza modificare codice esistente (es. TaxonomyConfig) |
+| **L**iskov Substitution | I service sono sostituibili con mock nei test |
+| **I**nterface Segregation | Trait SecureFormHandler fornisce solo metodi necessari |
+| **D**ependency Inversion | Dipendenze iniettate, non istanziate internamente |
+
+---
+
 ## Supporto
 
 Per assistenza tecnica o segnalazione bug:

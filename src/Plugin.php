@@ -8,7 +8,6 @@ final class Plugin
 {
     private TaxonomyRegistrar $taxonomyRegistrar;
     private AdminPage $adminPage;
-    private SettingsPage $settingsPage;
 
     public function __construct()
     {
@@ -23,7 +22,6 @@ final class Plugin
         $exportService = new ExportService($excelWriter);
         
         $this->adminPage = new AdminPage($importService, $exportService);
-        $this->settingsPage = new SettingsPage();
     }
 
     public function init(): void
@@ -31,10 +29,8 @@ final class Plugin
         add_action('init', [$this, 'checkDependencies']);
         add_action('init', [$this->taxonomyRegistrar, 'register']);
         add_action('admin_menu', [$this->adminPage, 'addMenu']);
-        add_action('admin_menu', [$this->settingsPage, 'addMenu']);
         add_action('admin_post_woo_excel_import', [$this->adminPage, 'handleImport']);
         add_action('admin_post_woo_excel_export', [$this->adminPage, 'handleExport']);
-        add_action('admin_post_woo_excel_save_settings', [$this->settingsPage, 'handleSave']);
         add_action('admin_enqueue_scripts', [$this->adminPage, 'enqueueAssets']);
     }
 
@@ -56,6 +52,8 @@ final class Plugin
 
     public function deactivate(): void
     {
+        // Clean up orphaned taxonomy terms (terms not associated with any product)
+        $this->taxonomyRegistrar->cleanOrphanedTerms();
         flush_rewrite_rules();
     }
 

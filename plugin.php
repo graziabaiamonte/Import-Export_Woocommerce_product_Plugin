@@ -51,3 +51,19 @@ $plugin->init();
 
 register_activation_hook(__FILE__, [$plugin, 'activate']);
 register_deactivation_hook(__FILE__, [$plugin, 'deactivate']);
+
+// Register uninstall hook - WordPress will execute uninstall.php when plugin is deleted
+// This is a fallback to ensure cleanup happens even if uninstall.php doesn't execute automatically
+register_uninstall_hook(__FILE__, 'WooExcelImporter\\uninstall_cleanup');
+
+/**
+ * Cleanup function called on plugin uninstall.
+ * This is a fallback that ensures the uninstall.php file is executed.
+ */
+function uninstall_cleanup(): void
+{
+    $uninstall_file = __DIR__ . '/uninstall.php';
+    if (file_exists($uninstall_file)) {
+        include_once $uninstall_file;
+    }
+}
