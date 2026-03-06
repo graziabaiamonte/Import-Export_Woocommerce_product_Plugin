@@ -22,7 +22,7 @@ Implementata la lettura a **"pezzi" (chunks)** usando `IReadFilter`:
 
 ### Come Funziona
 
-1. **Prima passaggio**: Legge solo la riga di intestazione (1 riga)
+1. **Primo passaggio**: Legge solo la riga di intestazione (1 riga)
 2. **Validazione**: Controlla che le colonne siano corrette
 3. **Ciclo di lettura**: Legge 100 righe alla volta
 4. **Processamento**: Processa il chunk e lo rimuove dalla memoria
@@ -199,30 +199,3 @@ private const CHUNK_THRESHOLD = 20 * 1024 * 1024; // 20MB
 # Deve completare senza errori
 # Memoria massima ~50MB indipendentemente dalla dimensione
 ```
-
-## Limitazioni e Trade-offs
-
-### Pro
-- ✅ Memoria costante
-- ✅ Scalabile infinitamente
-- ✅ Nessun limite teorico sulla dimensione del file
-
-### Contro
-- ⚠️ Leggermente più lento (~25-40% per file grandi)
-- ⚠️ Più complesso da debuggare
-- ⚠️ Richiede più cicli di I/O sul disco
-
-### Quando NON Usare Chunk Reading
-- File piccoli (< 1MB) → overhead inutile
-- Se il server ha RAM illimitata → non necessario
-- Se la velocità è critica → lettura normale è più veloce
-
-## Conclusione
-
-Questa implementazione rappresenta un **approccio professionale** alla gestione di file grandi, bilanciando:
-- Performance
-- Uso risorse
-- Scalabilità
-- Manutenibilità
-
-È esattamente il tipo di soluzione che dimostra comprensione dei problemi reali di produzione e capacità di implementare soluzioni robuste.

@@ -3,6 +3,7 @@
 .DS_Store
 .vscode/
 *.log
-
 composer.lock
 SPECIFICHE.md
+MEMORY-OPTIMIZATION.md
+ROBUSTINESS-VERIFICATION.md

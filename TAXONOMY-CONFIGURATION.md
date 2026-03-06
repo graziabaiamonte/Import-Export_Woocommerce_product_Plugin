@@ -147,14 +147,6 @@ TaxonomyConfig::getAllSlugs();
 TaxonomyConfig::getAllColumnNames();
 ```
 
-## Best Practices
-
-1. **Naming Consistency:** Usa nomi coerenti tra slug, label e nome colonna
-2. **Documentation:** Documenta lo scopo di ogni tassonomia se non è ovvio
-3. **Testing:** Testa sempre dopo aver aggiunto nuove tassonomie
-4. **Backup:** Fai sempre un backup prima di modificare tassonomie in produzione
-5. **Planning:** Pianifica la struttura delle tassonomie prima di implementarle
-
 ## FAQ
 
 **Q: Posso avere spazi nel nome della colonna Excel?**
@@ -168,7 +160,3 @@ A: Sì, ma dovrai aggiornare anche i file Excel che usi per l'import.
 
 **Q: Le tassonomie custom (create dinamicamente) possono essere aggiunte qui?**
 A: No, questo file è solo per tassonomie "conosciute". Le tassonomie custom vengono gestite dinamicamente dal plugin.
-
-## Supporto
-
-Per problemi o domande, consulta la documentazione principale nel file `README.md`.
