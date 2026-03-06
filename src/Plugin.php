@@ -47,6 +47,10 @@ final class Plugin
 
         // Register taxonomies, skipping those already connected to product post type
         $this->taxonomyRegistrar->registerOnActivation();
+
+        // Crea le categorie WooCommerce predefinite (product_cat)
+        $this->taxonomyRegistrar->createDefaultWooCategories();
+
         flush_rewrite_rules();
     }
 

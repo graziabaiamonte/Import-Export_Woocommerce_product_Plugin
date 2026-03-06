@@ -23,7 +23,8 @@ $taxonomySlugs = [
     // Current version (with underscores)
     'quantity_per_box',
     'disposable_reusable',
-    'product_category',
+    // 'product_cat' è la tassonomia nativa WooCommerce: non va eliminata
+    // 'product_category' era il vecchio slug custom (rimosso)
     'steel_titanium_instruments',
     'backflush_type',
     'backflush_tip',

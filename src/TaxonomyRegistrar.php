@@ -48,6 +48,24 @@ final class TaxonomyRegistrar
     }
 
     /**
+     * Crea le categorie WooCommerce (product_cat) predefinite all'attivazione del plugin.
+     * Le categorie già esistenti vengono saltate silenziosamente.
+     */
+    public function createDefaultWooCategories(): void
+    {
+        foreach (TaxonomyConfig::getKnownTaxonomies() as $columnName => $config) {
+            if (empty($config['native']) || $config['slug'] !== 'product_cat') {
+                continue;
+            }
+
+            // Nessuna categoria di default da pre-creare: le categorie WooCommerce
+            // vengono create dinamicamente durante l'import dal file Excel.
+            // Questo metodo è il punto di estensione se in futuro si volessero
+            // creare categorie predefinite all'attivazione.
+        }
+    }
+
+    /**
      * Check if a taxonomy is already connected to the product post type.
      */
     private function isTaxonomyConnectedToProduct(string $taxonomy): bool
@@ -73,6 +91,11 @@ final class TaxonomyRegistrar
     {
         foreach ($this->getAllTaxonomies() as $config) {
             $taxonomy = $config['slug'];
+
+            // Non toccare le tassonomie native WooCommerce (es. product_cat)
+            if (!empty($config['native'])) {
+                continue;
+            }
             
             if (!taxonomy_exists($taxonomy)) {
                 continue;
@@ -151,6 +174,11 @@ final class TaxonomyRegistrar
 
     private function registerTaxonomy(array $config): void
     {
+        // Le tassonomie native WooCommerce (es. product_cat) non vanno registrate
+        if (!empty($config['native'])) {
+            return;
+        }
+
         if (taxonomy_exists($config['slug'])) {
             register_taxonomy_for_object_type($config['slug'], 'product');
             return;

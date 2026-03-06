@@ -38,9 +38,10 @@ final class TaxonomyConfig
                 'label' => 'Disposable/Reusable',
             ],
             'CATEGORY' => [
-                'slug' => 'product_category',
+                'slug' => 'product_cat',
                 'hierarchical' => true,
                 'label' => 'Category',
+                'native' => true,  // Tassonomia nativa WooCommerce - non va registrata né eliminata
             ],
             'STEEL & TITANIUM INSTRUMENTS FAMILIES' => [
                 'slug' => 'steel_titanium_instruments',
