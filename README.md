@@ -12,6 +12,8 @@ Questo plugin ti permette di:
 ✅ **Esportare prodotti** esistenti verso Excel per modifiche offline  
 ✅ **Aggiornare prodotti** esistenti (il plugin riconosce prodotti già presenti tramite SKU)  
 ✅ **Gestire 26 tassonomie personalizzate** per catalogare prodotti medicali/chirurgici  
+✅ **Gestire termini e tassonomie** direttamente dall'interfaccia nativa di WordPress (menu **Prodotti**)  
+✅ **Assegnare tassonomie ai prodotti** tramite i metabox nativi di WordPress nella pagina di modifica prodotto  
 ✅ **Filtrare prodotti** nell'area admin per tassonomie  
 ✅ **Ricevere report dettagliati** dopo ogni import con successi ed errori
 
@@ -196,6 +198,35 @@ Il plugin gestisce **26 tassonomie personalizzate** specifiche per cataloghi med
 - Ogni prodotto può avere **un valore per tassonomia** (es. un prodotto ha `Disposable` oppure `Reusable`, non entrambi)
 - I termini vengono **creati automaticamente** se non esistono (es. se scrivi `Curved` la prima volta, viene creato)
 - Le tassonomie **vuote** nel file Excel non vengono assegnate al prodotto
+
+---
+
+## Gestione Tassonomie dall'Interfaccia WordPress
+
+### Termini delle tassonomie (menu Prodotti)
+
+Le tassonomie registrate dal plugin sono integrate nativamente in WordPress. Ogni tassonomia compare come voce di menu sotto **Prodotti**, esattamente come le categorie e i tag standard. Da lì puoi:
+
+- **Aggiungere nuovi termini** (es. aggiungere un nuovo valore a "Gauge")
+- **Modificare il nome** di un termine esistente
+- **Eliminare termini** non più utilizzati
+- **Visualizzare quanti prodotti** sono associati a ciascun termine
+
+**Come accedere:**
+1. Vai in **Prodotti** nel menu laterale di WordPress
+2. Troverai una voce per ogni tassonomia registrata (es. **Gauge**, **Tip Type**, **Packaging**, ecc.)
+3. Clicca sulla tassonomia per gestire i suoi termini
+
+### Assegnazione tassonomie nella pagina prodotto
+
+Nella pagina di modifica di un prodotto, le tassonomie del plugin sono assegnate tramite i **metabox nativi di WordPress** — gli stessi che WordPress genera automaticamente quando si associa una tassonomia gerarchica o non gerarchica a un post type.
+
+Non vengono utilizzati metabox personalizzati: l'interfaccia è quella standard di WordPress, garantendo compatibilità e familiarità per l'utente.
+
+**Comportamento:**
+- Ogni metabox mostra i termini disponibili per quella tassonomia
+- È possibile selezionare **un solo termine per tassonomia** (singola selezione)
+- I termini vengono salvati esattamente come avviene per le categorie WooCommerce native
 
 ---
 
