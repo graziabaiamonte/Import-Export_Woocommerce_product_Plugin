@@ -219,13 +219,13 @@ Le tassonomie registrate dal plugin sono integrate nativamente in WordPress. Ogn
 
 ### Assegnazione tassonomie nella pagina prodotto
 
-Nella pagina di modifica di un prodotto, le tassonomie del plugin sono assegnate tramite i **metabox nativi di WordPress** — gli stessi che WordPress genera automaticamente quando si associa una tassonomia gerarchica o non gerarchica a un post type.
+Nella pagina di modifica di un prodotto, le tassonomie del plugin sono assegnate tramite i **metabox nativi di WordPress** — gli stessi che WordPress genera automaticamente quando si associa una tassonomia a un post type.
 
 Non vengono utilizzati metabox personalizzati: l'interfaccia è quella standard di WordPress, garantendo compatibilità e familiarità per l'utente.
 
 **Comportamento:**
 - Ogni metabox mostra i termini disponibili per quella tassonomia
-- È possibile selezionare **un solo termine per tassonomia** (singola selezione)
+- È possibile selezionare **un solo termine per tassonomia**
 - I termini vengono salvati esattamente come avviene per le categorie WooCommerce native
 
 ---
