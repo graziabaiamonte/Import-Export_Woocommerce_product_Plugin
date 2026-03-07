@@ -12,7 +12,11 @@ final class TaxonomyRegistrar
 
     public function register(): void
     {
+        $disabled = get_option('woo_excel_disabled_taxonomies', []);
         foreach ($this->getAllTaxonomies() as $config) {
+            if (in_array($config['slug'], $disabled, true)) {
+                continue;
+            }
             $this->registerTaxonomy($config);
         }
 
@@ -37,8 +41,12 @@ final class TaxonomyRegistrar
      */
     public function registerOnActivation(): void
     {
+        $disabled = get_option('woo_excel_disabled_taxonomies', []);
         foreach ($this->getAllTaxonomies() as $config) {
             $slug = $config['slug'];
+            if (in_array($slug, $disabled, true)) {
+                continue;
+            }
             
             // Skip if taxonomy already exists and is connected to product
             if (taxonomy_exists($slug) && $this->isTaxonomyConnectedToProduct($slug)) {
@@ -187,11 +195,15 @@ final class TaxonomyRegistrar
             return;
         }
 
+        // Applica eventuale override di label salvato dall'utente
+        $labelOverrides = get_option('woo_excel_taxonomy_label_overrides', []);
+        $label = $labelOverrides[$config['slug']] ?? $config['label'];
+
         // Usa sempre il metabox gerarchico nativo di WP (checkbox con albero indentato).
         // Il JS nella pagina prodotto converte i checkbox in radio per imporre singola selezione.
         $args = [
-            'label'              => $config['label'],
-            'labels'             => $this->generateLabels($config['label']),
+            'label'              => $label,
+            'labels'             => $this->generateLabels($label),
             'hierarchical'       => $config['hierarchical'],
             'public'             => false,
             'publicly_queryable' => false,
@@ -597,5 +609,145 @@ final class TaxonomyRegistrar
         }
 
         return $slug;
+    }
+
+    /**
+     * Restituisce tutte le tassonomie gestibili dall'utente.
+     * Per ognuna indica se è modificabile solo nel nome ('known') o anche eliminabile ('custom').
+     *
+     * @return array{slug: string, label: string, column: string, type: 'known'|'custom'}[]
+     */
+    public function getCustomizableTaxonomies(): array
+    {
+        $result         = [];
+        $labelOverrides = get_option('woo_excel_taxonomy_label_overrides', []);
+        $disabled       = get_option('woo_excel_disabled_taxonomies', []);
+
+        foreach (TaxonomyConfig::getKnownTaxonomies() as $columnName => $config) {
+            if (!empty($config['native'])) {
+                continue;
+            }
+            if (in_array($config['slug'], $disabled, true)) {
+                continue;
+            }
+            $slug  = $config['slug'];
+            $label = $labelOverrides[$slug] ?? $config['label'];
+            $result[] = [
+                'slug'    => $slug,
+                'label'   => $label,
+                'column'  => $columnName,
+                'type'    => 'config',
+            ];
+        }
+
+        foreach ($this->getCustomTaxonomies() as $columnName => $config) {
+            $slug  = $config['slug'];
+            $label = $config['label'];
+            $result[] = [
+                'slug'    => $slug,
+                'label'   => $label,
+                'column'  => $columnName,
+                'type'    => 'custom', // salvata in DB: rinominabile ed eliminabile
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Rinomina la label di una tassonomia (sia known che custom).
+     * Per le tassonomie 'known' salva un override in un'opzione separata.
+     * Per le tassonomie 'custom' aggiorna direttamente l'opzione.
+     *
+     * @throws \InvalidArgumentException se lo slug non è trovato o la label è vuota.
+     */
+    public function renameTaxonomy(string $slug, string $newLabel): void
+    {
+        $newLabel = trim($newLabel);
+        if ($newLabel === '') {
+            throw new \InvalidArgumentException('Il nome della tassonomia non può essere vuoto.');
+        }
+
+        // Verifica se è una tassonomia 'known'
+        foreach (TaxonomyConfig::getKnownTaxonomies() as $config) {
+            if (!empty($config['native'])) {
+                continue;
+            }
+            if ($config['slug'] === $slug) {
+                $overrides         = get_option('woo_excel_taxonomy_label_overrides', []);
+                $overrides[$slug]  = $newLabel;
+                update_option('woo_excel_taxonomy_label_overrides', $overrides, false);
+                return;
+            }
+        }
+
+        // Verifica se è una tassonomia 'custom'
+        $customs = $this->getCustomTaxonomies();
+        foreach ($customs as $columnName => $config) {
+            if ($config['slug'] === $slug) {
+                $customs[$columnName]['label'] = $newLabel;
+                $this->saveCustomTaxonomies($customs);
+                return;
+            }
+        }
+
+        throw new \InvalidArgumentException(
+            sprintf('Tassonomia con slug "%s" non trovata.', $slug)
+        );
+    }
+
+    /**
+     * Elimina una tassonomia e tutti i suoi termini.
+     * - Tassonomie 'config' (da TaxonomyConfig): vengono aggiunte alla lista disabilitati.
+     * - Tassonomie 'custom' (da DB): vengono rimosse dall'opzione.
+     *
+     * @throws \InvalidArgumentException se lo slug non è trovato.
+     */
+    public function deleteTaxonomy(string $slug): void
+    {
+        $found = false;
+
+        // Tassonomia 'config': aggiungila ai disabilitati
+        foreach (TaxonomyConfig::getKnownTaxonomies() as $config) {
+            if (!empty($config['native'])) {
+                continue;
+            }
+            if ($config['slug'] === $slug) {
+                $disabled   = get_option('woo_excel_disabled_taxonomies', []);
+                $disabled[] = $slug;
+                update_option('woo_excel_disabled_taxonomies', array_unique($disabled), false);
+                $found = true;
+                break;
+            }
+        }
+
+        // Tassonomia 'custom': rimuovila dal DB
+        if (!$found) {
+            $customs = $this->getCustomTaxonomies();
+            foreach ($customs as $columnName => $config) {
+                if ($config['slug'] === $slug) {
+                    unset($customs[$columnName]);
+                    $this->saveCustomTaxonomies($customs);
+                    $found = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$found) {
+            throw new \InvalidArgumentException(
+                sprintf('La tassonomia "%s" non è stata trovata.', $slug)
+            );
+        }
+
+        // Elimina tutti i termini della tassonomia dal DB
+        if (taxonomy_exists($slug)) {
+            $terms = get_terms(['taxonomy' => $slug, 'hide_empty' => false, 'fields' => 'ids']);
+            if (!is_wp_error($terms)) {
+                foreach ($terms as $termId) {
+                    wp_delete_term((int) $termId, $slug);
+                }
+            }
+        }
     }
 }
