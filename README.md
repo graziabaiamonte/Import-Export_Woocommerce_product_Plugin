@@ -304,7 +304,7 @@ A: Leggi il report! Ogni riga ignorata ha un **motivo specifico**:
 
 **Q: Le tassonomie non vengono assegnate**  
 A: Verifica che:
-- ✅ I nomi colonne siano **esattamente** quelli elencati sopra (es. `QUANTITY PER BOX;` con punto e virgola)
+- ✅ I nomi colonne siano **esattamente** quelli elencati sopra (es. `QUANTITY PER BOX`)
 - ✅ I valori non contengano caratteri speciali (`<`, `>`, `"`, `'`)
 
 
