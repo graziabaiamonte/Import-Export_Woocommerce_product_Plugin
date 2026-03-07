@@ -229,9 +229,6 @@ final class ExcelReader
         
         foreach ($headerRow as $index => $header) {
             $cleaned = trim((string) $header);
-            // Remove semicolon separator
-            $cleaned = str_replace(';', '', $cleaned);
-            $cleaned = trim($cleaned);
             
             // Skip completely empty headers (empty cells at the end)
             if ($cleaned !== '') {

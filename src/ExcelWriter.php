@@ -45,7 +45,7 @@ final class ExcelWriter
 
         foreach ($headers as $header) {
             $cellCoord = $this->getColumnLetter($column) . '1';
-            $sheet->setCellValue($cellCoord, $header . ';');
+            $sheet->setCellValue($cellCoord, $header);
             $column++;
         }
     }

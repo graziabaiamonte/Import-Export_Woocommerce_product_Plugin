@@ -15,7 +15,6 @@ namespace WooExcelImporter;
  * Each taxonomy has:
  * - slug: URL-safe identifier (max 32 chars, lowercase, alphanumeric + underscore)
  * - hierarchical: true for category-like, false for tag-like
- * - label: Human-readable name shown in admin
  */
 final class TaxonomyConfig
 {
@@ -41,7 +40,7 @@ final class TaxonomyConfig
                 'slug' => 'product_cat',
                 'hierarchical' => true,
                 'label' => 'Category',
-                'native' => true,  // Tassonomia nativa WooCommerce - non va registrata né eliminata
+                'native' => true, 
             ],
             'STEEL & TITANIUM INSTRUMENTS FAMILIES' => [
                 'slug' => 'steel_titanium_instruments',
