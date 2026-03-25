@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooExcelImporter;
 
-// Definisce un trait (un blocco di metodi riutilizzabili incluso nelle classi tramite "use"), chiamato SecureFormHandler
+// Definisce un trait (un blocco di metodi riutilizzabili incluso nelle classi tramite "use")
 trait SecureFormHandler
 {
     /**

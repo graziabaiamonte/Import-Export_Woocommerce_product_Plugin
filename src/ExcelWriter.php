@@ -9,10 +9,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 // Classe che converte il documento in memoria nel formato .xlsx.
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-// Importa l'eccezione specifica del writer di PhpSpreadsheet e la rinomina "WriterException" per chiarezza.
 use PhpOffice\PhpSpreadsheet\Writer\Exception as WriterException;
 
-// classe di WooCommerce che vive nello spazio globale (senza namespace)
 use WC_Product_Simple;
 
 final class ExcelWriter
@@ -36,14 +34,10 @@ final class ExcelWriter
     }
 
     // Crea e restituisce un oggetto Spreadsheet popolato con i dati dei prodotti.
-    // "array $products" riceve la lista di prodotti WooCommerce da esportare
     public function createExcel(array $products): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
-
-        // Recupera il foglio attivo (il primo per default) sul quale scriveremo intestazioni e dati.
         $sheet = $spreadsheet->getActiveSheet();
-
         $this->writeHeaders($sheet);
 
         // Scrive una riga per ogni prodotto a partire dalla riga 2, dopo le intestazioni.
@@ -66,7 +60,6 @@ final class ExcelWriter
             // Calcola la coordinata della cella (es. "A1", "B1") combinando la lettera di colonna con il numero di riga 1.
             $cellCoord = $this->getColumnLetter($column) . '1';
 
-            // Scrive il testo dell'intestazione nella cella calcolata del foglio Excel.
             // "setCellValue" è il metodo di PhpSpreadsheet per inserire un valore in una cella tramite coordinata.
             $sheet->setCellValue($cellCoord, $header);
 
@@ -100,10 +93,8 @@ final class ExcelWriter
         // Calcola la coordinata per la colonna SKU e incrementa subito "$column"
         $cellCoord = $this->getColumnLetter($column++) . $row;
 
-        // Scrive lo SKU del prodotto nella cella calcolata (es. "A2" per il primo prodotto).
         $sheet->setCellValue($cellCoord, $product->get_sku());
 
-        // Calcola la coordinata per la colonna TITLE (colonna B) e incrementa il contatore.
         $cellCoord = $this->getColumnLetter($column++) . $row;
         $sheet->setCellValue($cellCoord, $product->get_name());
 
@@ -133,8 +124,6 @@ final class ExcelWriter
             $termName = $this->taxonomyService->getProductTermName($product->get_id(), $taxonomySlug);
 
             $cellCoord = $this->getColumnLetter($column++) . $row;
-
-            // Scrive il nome del termine nella cella
             $sheet->setCellValue($cellCoord, $termName);
         }
     }
@@ -142,7 +131,6 @@ final class ExcelWriter
     // Salva il documento Excel su disco nel percorso file specificato.
     public function saveToFile(Spreadsheet $spreadsheet, string $filePath): void
     {
-        // intercetta eventuali errori durante la scrittura del file
         try {
             
             // Crea un'istanza del writer Xlsx passando il documento da serializzare.
@@ -157,13 +145,11 @@ final class ExcelWriter
     }
 
     // Invia il file Excel direttamente al browser dell'utente come download.
-    // Usato quando l'utente clicca il pulsante "Esporta" 
     public function outputToDownload(Spreadsheet $spreadsheet, string $filename): void
     {
         $safeFilename = sanitize_file_name($filename);
 
         // Controlla che gli header HTTP non siano ancora stati inviati al browser prima di inviarli.
-        // In PHP gli header devono essere inviati prima di qualsiasi output (HTML, echo, ecc.); "headers_sent()" restituisce true se è troppo tardi.
         if (!headers_sent()) {
             
             // Dichiara il tipo MIME del file come Excel .xlsx, così il browser sa come gestirlo.
@@ -193,7 +179,6 @@ final class ExcelWriter
             header('Pragma: public');
         }
 
-        // Intercetta errori durante la generazione e l'invio del file Excel al browser.
         try {
             $writer = new Xlsx($spreadsheet);
 
@@ -216,10 +201,8 @@ final class ExcelWriter
     // Es.: 1 → "A", 26 → "Z", 27 → "AA", 28 → "AB". Necessario perché PhpSpreadsheet accetta coordinate come "A1".
     private function getColumnLetter(int $columnIndex): string
     {
-        // Inizializza la stringa risultato vuota; 
         $letter = '';
 
-        // Continua il ciclo finché c'è ancora una parte del numero di colonna da convertire.
         // Il ciclo termina quando "$columnIndex" raggiunge 0, cioè quando tutte le "cifre" in base 26 sono state elaborate.
         while ($columnIndex > 0) {
             

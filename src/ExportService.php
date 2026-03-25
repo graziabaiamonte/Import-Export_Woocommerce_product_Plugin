@@ -18,9 +18,7 @@ final class ExportService
     {
         // Istanzia ProductService passandogli TaxonomyService (che a sua volta usa TaxonomyRegistrar): costruisce la catena di dipendenze necessaria per recuperare i prodotti WooCommerce con le loro tassonomie
         $productService = new ProductService(
-            // TaxonomyService gestisce le tassonomie personalizzate (categorie, tag, attributi); riceve TaxonomyRegistrar per sapere quali tassonomie sono registrate nel plugin
             new TaxonomyService(
-                // TaxonomyRegistrar conosce le definizioni delle tassonomie custom registrate da questo plugin in WordPress
                 new TaxonomyRegistrar()
             )
         );
@@ -31,7 +29,6 @@ final class ExportService
             throw new \RuntimeException('No products found to export');
         }
 
-        // Crea il file Excel (oggetto Spreadsheet di PhpSpreadsheet)
         $spreadsheet = $this->excelWriter->createExcel($products);
 
         // Genera il nome del file con timestamp per rendere identificabile la data dell'export

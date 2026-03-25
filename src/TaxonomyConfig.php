@@ -11,13 +11,9 @@ namespace WooExcelImporter;
  * - Add new taxonomies
  * - Update existing taxonomies
  * - Maintain consistency across the plugin
- *
- * Each taxonomy has:
- * - slug: URL-safe identifier (max 32 chars, lowercase, alphanumeric + underscore)
- * - hierarchical: true for category-like, false for tag-like
  */
 
-// final e static indicano che: "Questa classe non è pensata per essere istanziata. È un punto di accesso globale a dati di configurazione."
+// final e static indicano che questa classe non è pensata per essere istanziata. È un punto di accesso globale a dati di configurazione.
 //
 // Grazie a static, qualsiasi altra classe può consultare la configurazione senza dipendenze(es.TaxonomyConfig::getAllSlugs();). Se i metodi non fossero static, ogni classe che ne ha bisogno dovrebbe ricevere un'istanza di TaxonomyConfig come dipendenza — inutile complessità per dati che non cambiano mai.
 //
@@ -203,9 +199,6 @@ final class TaxonomyConfig
         return array_column(self::getKnownTaxonomies(), 'slug');
     }
 
-
-    // Restituisce tutte le chiavi dell'array delle tassonomie,
-    // cioè i nomi esatti delle colonne Excel (es. 'GAUGE', 'DOSAGE', 'CATEGORY').
     public static function getAllColumnNames(): array
     {
         return array_keys(self::getKnownTaxonomies());

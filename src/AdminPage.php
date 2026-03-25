@@ -217,18 +217,16 @@ final class AdminPage
         set_transient('woo_excel_import_report', $report, 300);
     }
 
-    // Raccoglie i messaggi di notifica da mostrare nella pagina admin.
     private function getNotices(): array
     {
         $notices = [];
 
-        // Controlla se nell'URL è presente il parametro 'import_error' (errore di importazione).
+        // Controlla se nell'URL è presente il parametro 'import_error' (errore di importazione)
         if (isset($_GET['import_error'])) {
             
-            // wp_unslash() rimuove i backslash aggiuntivi aggiunti da PHP (magic quotes).
+            // wp_unslash() rimuove i backslash aggiuntivi aggiunti da PHP
             $error = sanitize_text_field(wp_unslash($_GET['import_error']));
 
-            // sprintf() inserisce il testo dell'errore nel template HTML.
             // wp_kses_post() permette solo i tag HTML sicuri (bold, strong, ecc.) nel messaggio.
             $notices[] = sprintf(
                 '<div class="notice notice-error is-dismissible"><p>%s</p></div>',
@@ -236,23 +234,15 @@ final class AdminPage
             );
         }
 
-        // Controlla se nell'URL è presente il parametro 'import_success' (importazione riuscita).
         if (isset($_GET['import_success'])) {
             // Tenta di recuperare il report di importazione salvato nel transient del database.
             $report = get_transient('woo_excel_import_report');
 
-            // Verifica che il valore recuperato sia effettivamente un'istanza di ImportReport.
             if ($report instanceof ImportReport) {
-                // Se il report esiste, costruisce un notice HTML dettagliato con statistiche.
                 $notices[] = $this->buildImportReport($report);
-
-                // Elimina il transient dal database: non serve più dopo averlo mostrato.
                 delete_transient('woo_excel_import_report');
             } else {
-                // Se il report non è disponibile, usa il messaggio testuale dall'URL come fallback.
-                // L'operatore ternario controlla se 'import_message' è presente nell'URL.
                 $message = isset($_GET['import_message'])
-                    // Se presente, sanitizza e usa il messaggio dall'URL.
                     ? sanitize_text_field(wp_unslash($_GET['import_message']))
                     : __('Import completed.', 'woo-excel-importer');
 
@@ -266,13 +256,11 @@ final class AdminPage
     }
 
     // Costruisce l'HTML dettagliato del report di importazione
-    // con statistiche sui prodotti elaborati e dettagli sulle righe ignorate.
     private function buildImportReport(ImportReport $report): string
     {
-        // Controlla se ci sono righe ignorate: se getRowsIgnored() > 0, ci sono avvertimenti.
         $hasWarnings = $report->getRowsIgnored() > 0;
 
-        // Determina la classe CSS del notice in base alla presenza di avvertimenti:
+        // Determina la classe del notice in base alla presenza di avvertimenti:
         $noticeClass = $hasWarnings ? 'notice-warning' : 'notice-success';
 
         // Avvia il buffer di output: tutto l'HTML scritto da ora verrà catturato in memoria
@@ -365,6 +353,7 @@ final class AdminPage
             <?php endif; ?>
         </div>
         <?php
+
         // ob_get_clean() recupera tutto l'HTML accumulato nel buffer e lo restituisce come stringa,
         // azzerando il buffer. In questo modo il metodo restituisce l'HTML senza averlo stampato.
         return ob_get_clean();
@@ -378,17 +367,15 @@ final class AdminPage
         // EXTR_SKIP evita di sovrascrivere variabili già esistenti con lo stesso nome.
         extract($data, EXTR_SKIP);
 
-        // Costruisce il percorso assoluto del file template unendo la costante del plugin
-        // (percorso base del plugin) con il nome del template e l'estensione .php.
+        // Costruisce il percorso assoluto del file template 
         $viewPath = WOO_EXCEL_IMPORTER_PATH . 'views/' . $template . '.php';
 
         // Verifica che il file del template esista fisicamente sul filesystem.
         if (file_exists($viewPath)) {
-            // Carica ed esegue il file template, che ora ha accesso alle variabili estratte da $data.
+            
+            // Carica ed esegue il file template
             include $viewPath;
         } else {
-            // Se il file non esiste, usa wp_die() per mostrare un messaggio di errore
-            // e interrompere l'esecuzione di WordPress in modo controllato.
             wp_die(sprintf(
                 esc_html__('Template file not found: %s', 'woo-excel-importer'),
                 esc_html($template)
@@ -396,23 +383,17 @@ final class AdminPage
         }
     }
 
-    // Carica i file CSS e JS del plugin nelle pagine admin corrette.
-    // Viene chiamato tramite il hook 'admin_enqueue_scripts' di WordPress.
-    // Il parametro $hook contiene l'identificatore della pagina admin corrente.
     public function enqueueAssets(string $hook): void
     {
-        // Carica gli stili nella pagina del plugin
         // Controlla se lo slug del plugin è contenuto nell'identificatore della pagina corrente.
         if (strpos($hook, self::MENU_SLUG) !== false) {
-            // Registra e carica il foglio di stile CSS del plugin.
             wp_enqueue_style(
-                // Handle univoco dello stile, usato da WordPress per evitare duplicati.
                 'woo-excel-importer-admin',
-                // URL assoluto del file CSS, costruito dalla costante URL del plugin.
                 WOO_EXCEL_IMPORTER_URL . 'assets/admin.css',
+                
                 // Array delle dipendenze CSS: vuoto perché non dipende da altri stili.
                 [],
-                // Versione del file: usata da WordPress per il cache-busting (aggiorna il file nel browser).
+
                 WOO_EXCEL_IMPORTER_VERSION
             );
         }
@@ -421,11 +402,9 @@ final class AdminPage
         // Accede alla variabile globale WordPress che contiene il tipo di post corrente nell'admin.
         global $typenow;
 
-        // Controlla se la pagina corrente mostra post di tipo 'product' (lista prodotti WooCommerce).
         if ($typenow === 'product') {
-            // Carica lo stesso foglio di stile CSS anche nella pagina lista prodotti.
-            // Questo permette di applicare stili personalizzati ai filtri di tassonomia nella lista.
             wp_enqueue_style(
+               
                 // Stesso handle: se lo stile è già stato caricato, WordPress non lo carica di nuovo.
                 'woo-excel-importer-admin',
     

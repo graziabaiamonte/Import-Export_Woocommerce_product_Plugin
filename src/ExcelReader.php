@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace WooExcelImporter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-// Classe principale di PhpSpreadsheet per caricare file Excel.
+// per caricare file Excel.
 
 use PhpOffice\PhpSpreadsheet\Reader\Exception as ReaderException;
 
@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Settings;
 // Usata per configurare il comportamento globale della libreria (es. cache, memoria).
 
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
-// Importa la classe Cell di PhpSpreadsheet che rappresenta una singola cella.
+// Importa la classe Cell che rappresenta una singola cella.
 // (In questo file non viene usata direttamente ma è importata per compatibilità
 // con la libreria).
 
@@ -77,14 +77,10 @@ final class ExcelReader
     private function configureMemoryOptimizations(): void
     {
         // Disabilita la cache delle celle in memoria
-        // Questo riduce drasticamente l'uso di RAM per file grandi
+        // Questo riduce l'uso di RAM per file grandi
         Settings::setCache(new \PhpOffice\PhpSpreadsheet\Collection\Memory\SimpleCache3());
 
-        // Limita il numero di celle mantenute in cache
         if (method_exists(Settings::class, 'setCacheSize')) {
-            // "method_exists()" verifica se un metodo esiste prima di chiamarlo.
-            // "Settings::class" restituisce il nome completo della classe come stringa.
-            // Questo controllo evita errori se la versione di PhpSpreadsheet non ha "setCacheSize".
             Settings::setCacheSize(1000);
             // Limita la cache a massimo 1000 celle tenute in memoria contemporaneamente.
         }
@@ -95,7 +91,6 @@ final class ExcelReader
         try {
             $spreadsheet = IOFactory::load($filePath);
             // Rileva il formato del file (xlsx, xls, csv...)
-            // L'oggetto viene salvato in $spreadsheet.
 
         } catch (ReaderException $e) {
             throw new \RuntimeException('Failed to read Excel file. The file may be corrupted or in an unsupported format. Error: ' . $e->getMessage());
@@ -107,7 +102,7 @@ final class ExcelReader
             $worksheet = $spreadsheet->getActiveSheet();
 
             $data = $worksheet->toArray();
-            // "toArray()" converte l'intero foglio in un array
+            // converte l'intero foglio in un array
 
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to read worksheet data. The file may be corrupted. Error: ' . $e->getMessage());
@@ -136,20 +131,17 @@ final class ExcelReader
 
         $headerIndices = $headerData['indices'];
         // Estrae i corrispondenti indici ORIGINALI delle colonne nel file Excel.
-        // Serve per mappare correttamente i dati anche se ci sono celle vuote.
 
         $this->validateHeaders($headers);
 
         $rows = [];
 
         $rowCount = count($data);
-        // Conta il numero totale di righe nel file (inclusa quella degli header).
 
         for ($i = 1; $i < $rowCount; $i++) {
             $rows[] = $this->parseRow($data[$i], $headers, $headerIndices);
             // "parseRow()" converte una riga in array associativo chiave→valore.
         }
-
         return $rows;
     }
 
@@ -186,13 +178,13 @@ final class ExcelReader
             $worksheet = $spreadsheet->getActiveSheet();
 
             $headerRow = $worksheet->toArray()[0] ?? [];
-            // "toArray()" converte il foglio in array. "[0]" prende la prima (e unica) riga.
+            // converte il foglio in array. "[0]" prende la prima (e unica) riga.
 
             $headerData = $this->parseHeaders($headerRow);
             // Elabora la riga header per estrarre nomi colonna e indici originali.
 
             $headers = $headerData['headers'];
-            // Salva i nomi delle colonne nella variabile $headers.
+            // Salva i nomi delle colonne
 
             $headerIndices = $headerData['indices'];
             // Salva gli indici originali delle colonne 
@@ -201,7 +193,7 @@ final class ExcelReader
 
             // Ottieni il numero totale di righe
             $highestRow = $worksheet->getHighestRow();
-            // "getHighestRow()" restituisce il numero dell'ultima riga con dati
+            // restituisce il numero dell'ultima riga con dati
 
             // Libera memoria dopo aver letto l'header
             $spreadsheet->disconnectWorksheets();
@@ -209,8 +201,7 @@ final class ExcelReader
             unset($spreadsheet, $worksheet);
             // Distrugge entrambe le variabili in una sola istruzione "unset"
 
-            // Secondo passaggio: leggi i dati a chunk
-            // Inizia dalla riga 2 
+            // Secondo passaggio: leggi i dati a chunk iniziando dalla riga 2
             $startRow = 2;
 
             while ($startRow <= $highestRow) {
@@ -218,7 +209,6 @@ final class ExcelReader
 
                 // Crea un nuovo reader per ogni chunk
                 $chunkReader = IOFactory::createReaderForFile($filePath);
-                // Crea un reader fresco per ogni chunk. 
 
                 $chunkReader->setReadDataOnly(true);
 
@@ -284,11 +274,7 @@ final class ExcelReader
         $indices = [];
 
         foreach ($headerRow as $index => $header) {
-            // Itera su ogni cella della riga header.
-            // $header = valore grezzo della cella (potrebbe essere null, stringa, numero...).
-
             $cleaned = trim((string) $header);
-
             if ($cleaned !== '') {
                 
                 // Se la cella non è completamente vuota, la consideriamo un header valido.
@@ -310,42 +296,33 @@ final class ExcelReader
         // Check for completely empty header row
         $nonEmptyHeaders = array_filter($headers, function($h) {
             // "array_filter()" filtra un array mantenendo solo gli elementi per cui
-            // il callback (la funzione anonima) restituisce true.
-            // "function($h)" è una funzione anonima (closure) che riceve un elemento dell'array.
+            // il callback restituisce true.
+
+            // "function($h)" è una funzione anonima che riceve un elemento dell'array.
             return !empty(trim((string) $h));
             // Restituisce true se l'header è non vuoto.
         });
 
         if (empty($nonEmptyHeaders)) {
-            // Se dopo il filtro l'array è vuoto, tutti gli header erano vuoti.
             throw new \RuntimeException(
                 'Excel file header row is empty. The first row must contain column names.'
             );
         }
 
         $cleanHeaders = array_map('trim', $headers);
-        // "array_map()" applica una funzione a ogni elemento dell'array e restituisce
-        // un nuovo array con i risultati
-        // Risultato: array di header tutti trimmati.
-
         $cleanRequired = array_map('trim', self::REQUIRED_HEADERS);
-        // Applica trim anche alle costanti degli header obbligatori
 
         // Check for duplicate headers
         $duplicates = array_diff_assoc($cleanHeaders, array_unique($cleanHeaders));
         // "array_unique()" rimuove i duplicati da un array.
-        // "array_diff_assoc()" confronta due array considerando anche le chiavi:
-        // restituisce gli elementi presenti nel primo array ma non nel secondo.
 
         if (!empty($duplicates)) {
             throw new \RuntimeException(
                 'Excel file contains duplicate column headers: ' . implode(', ', array_unique($duplicates)) . '. Each column name must be unique.'
-                // "implode(', ', array)" concatena gli elementi dell'array con ", " tra loro.
-                // "array_unique($duplicates)" evita di mostrare lo stesso duplicato due volte.
+                // implode concatena gli elementi dell'array con ", " tra loro.
             );
         }
 
-        // Check missing required columns
         $missing = array_diff($cleanRequired, $cleanHeaders);
 
         if (!empty($missing)) {
@@ -385,13 +362,10 @@ final class ExcelReader
         $row = [];
 
         foreach ($headers as $idx => $header) {
-            // Itera su ogni nome colonna.
             // $header = nome della colonna (es. 'SKU', 'TITLE'...).
 
             $originalIndex = $headerIndices[$idx];
-
             $value = isset($rowData[$originalIndex]) ? (string) $rowData[$originalIndex] : '';
-
             $row[$header] = trim($value);
         }
 
@@ -403,7 +377,8 @@ final class ExcelReader
     {
         if (!isset($file['error']) || is_array($file['error'])) {
             // "is_array($file['error'])" → se 'error' è un array, significa che
-            // sono stati caricati più file con lo stesso nome campo (non supportato).
+            // sono stati caricati più file con lo stesso nome campo
+
             return 'Invalid file upload. Please select a single file.';
         }
 
@@ -415,6 +390,7 @@ final class ExcelReader
         if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
             // PHP salva il file caricato in una directory temporanea, il cui percorso è in 'tmp_name'.
             // "is_uploaded_file()" verifica che il file sia stato davvero caricato via HTTP POST
+            
             return 'Invalid file upload. The file was not uploaded correctly.';
         }
 
@@ -426,20 +402,20 @@ final class ExcelReader
 
         $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         // "pathinfo()" analizza un percorso/nome file e ne estrae le componenti.
-        // "PATHINFO_EXTENSION" è una costante che chiede solo l'estensione (es. 'XLSX').
+        // "PATHINFO_EXTENSION" è una costante che chiede solo l'estensione
 
         if (!in_array($fileExtension, $allowedExtensions, true)) {
             // "in_array($valore, $array, true)" controlla se $valore è presente in $array.
-            // Il terzo parametro "true" abilita il confronto stretto (tipo + valore).
-            // >> entra nell'if se l'estensione NON è tra quelle consentite.
+            // Il terzo parametro "true" abilita il confronto stretto
             
             return 'Invalid file type "' . esc_html($fileExtension) . '". Allowed formats: ' . implode(', ', $allowedExtensions) . '. Please upload an Excel file.';
         }
 
-        $maxSize = 10 * 1024 * 1024; // 10MB
+        $maxSize = 10 * 1024 * 1024; 
 
         if (!isset($file['size']) || $file['size'] > $maxSize) {
             // Se la dimensione non è impostata o supera il limite 
+           
             $sizeMB = isset($file['size']) ? round($file['size'] / 1024 / 1024, 2) : 0;
             return 'File too large (' . $sizeMB . 'MB). Maximum allowed size: 10MB. Please reduce the file size or split into multiple files.';
         }

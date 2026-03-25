@@ -43,11 +43,9 @@ final class TaxonomyRegistrar
         // Ogni $config è un array associativo con 'slug', 'label', 'hierarchical', ecc.
         foreach ($this->getAllTaxonomies() as $config) {
             $slug = $config['slug'];
-
             if (taxonomy_exists($slug) && $this->isTaxonomyConnectedToProduct($slug)) {
                 continue;
             }
-
             $this->registerTaxonomy($config);
         }
     }
@@ -59,7 +57,6 @@ final class TaxonomyRegistrar
         }
 
         // Recupera l'oggetto tassonomia da WordPress con tutte le sue proprietà (label, object_type, ecc.).
-        // `get_taxonomy()` restituisce un oggetto WP_Taxonomy oppure false se la tassonomia non esiste.
         $tax_object = get_taxonomy($taxonomy);
 
         if (!$tax_object || empty($tax_object->object_type)) {
@@ -67,13 +64,11 @@ final class TaxonomyRegistrar
         }
 
         // cerca se 'product' è nell'array dei post type associati alla tassonomia.
-        // Il parametro true abilita la strict comparison (=== invece di ==)
         return in_array('product', $tax_object->object_type, true);
     }
 
     /**
-     * Clean orphaned terms (terms not associated with any product).
-     * Called on plugin deactivation to keep database clean.
+     * Clean orphaned terms (terms not associated with any product)
      */
     public function cleanOrphanedTerms(): void
     {
@@ -112,7 +107,6 @@ final class TaxonomyRegistrar
                 // Conta quanti prodotti sono associati al termine 
                 $count = $this->getTermProductCount($term_id, $taxonomy);
 
-                // If term has no products, delete it
                 if ($count === 0) {
                     wp_delete_term($term_id, $taxonomy);
                 }
@@ -126,15 +120,20 @@ final class TaxonomyRegistrar
         $args = [
             'post_type' => 'product',
             'post_status' => 'any',
+            
             // Recupera al massimo 1 prodotto: serve solo sapere se ne esiste almeno uno, non quanti.
             'posts_per_page' => 1,
+            
             'fields' => 'ids',
+          
             // Definisce il filtro per tassonomia: cerca solo i prodotti con il termine specificato.
             'tax_query' => [
                 [
                     'taxonomy' => $taxonomy,
+                    
                     // `field => 'term_id'` istruisce WordPress a cercare per ID invece che per slug o nome.
                     'field' => 'term_id',
+                    
                     // Il valore del termine da cercare: l'ID passato come argomento al metodo.
                     'terms' => $term_id,
                 ],
@@ -143,6 +142,7 @@ final class TaxonomyRegistrar
 
         // Esegue la query WordPress
         $query = new \WP_Query($args);
+
         // Restituisce il numero totale di prodotti trovati 
         return $query->found_posts;
     }
@@ -159,22 +159,22 @@ final class TaxonomyRegistrar
     }
 
     // Metodo privato che recupera le tassonomie custom create dall'utente tramite l'interfaccia del plugin.
-    private function getCustomTaxonomies(): array
-    {
-        // Recupera l'opzione 'woo_excel_importer_custom_taxonomies' dal database
-        // `get_option()` legge dalla tabella wp_options di WordPress usando la chiave specificata.
-        $custom = get_option('woo_excel_importer_custom_taxonomies', []);
-        // Restituisce l'opzione solo se è un array, altrimenti un array vuoto come fallback sicuro.
-        return is_array($custom) ? $custom : [];
-    }
+    // private function getCustomTaxonomies(): array
+    // {
+    //     // Recupera l'opzione 'woo_excel_importer_custom_taxonomies' dal database
+    //     // `get_option()` legge dalla tabella wp_options di WordPress usando la chiave specificata.
+    //     $custom = get_option('woo_excel_importer_custom_taxonomies', []);
+    //     // Restituisce l'opzione solo se è un array, altrimenti un array vuoto come fallback sicuro.
+    //     return is_array($custom) ? $custom : [];
+    // }
 
     // Salva l'array di tassonomie custom nel database WordPress.
     // Viene chiamato ogni volta che l'utente aggiunge o rimuove una tassonomia custom dall'interfaccia del plugin. (funzioanlità non usata >> elimina)
-    private function saveCustomTaxonomies(array $customTaxonomies): void
-    {
-        // `update_option(..., false)` aggiorna il valore in wp_options; false = non caricare l'opzione ad ogni richiesta (autoload disabilitato).
-        update_option('woo_excel_importer_custom_taxonomies', $customTaxonomies, false);
-    }
+    // private function saveCustomTaxonomies(array $customTaxonomies): void
+    // {
+    //     // `update_option(..., false)` aggiorna il valore in wp_options; false = non caricare l'opzione ad ogni richiesta (autoload disabilitato).
+    //     update_option('woo_excel_importer_custom_taxonomies', $customTaxonomies, false);
+    // }
 
     // Registra una singola tassonomia in WordPress usando il suo array di configurazione.
     private function registerTaxonomy(array $config): void
@@ -184,6 +184,7 @@ final class TaxonomyRegistrar
         }
 
         if (taxonomy_exists($config['slug'])) {
+            
             // Collega una tassonomia già esistente al post type 'product' senza ri-registrarla da zero.
             register_taxonomy_for_object_type($config['slug'], 'product');
             return;
@@ -194,8 +195,10 @@ final class TaxonomyRegistrar
         // Definisce l'array di argomenti per register_taxonomy()
         $args = [
             'label'              => $label,
+            
             // Array di etichette localizzate per ogni azione (cerca, modifica, aggiungi, ecc.).
             'labels'             => $this->generateLabels($label),
+            
             'hierarchical'       => $config['hierarchical'],
            
             // nasconde la tassonomia dalle query pubbliche e dagli URL del sito.

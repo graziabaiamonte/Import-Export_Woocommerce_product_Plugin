@@ -11,23 +11,18 @@ use WC_Product_Simple;
 
 final class ImportService
 {
-    
-    // "questa classe ha una proprietà $productService che può contenere solo oggetti di tipo ProductService,
     private ProductService $productService;
   
     private ExcelReader $excelReader;
 
     public function __construct(ProductService $productService, ExcelReader $excelReader)
     {
-        // Salva il ProductService iniettato come proprietà dell'istanza per usarlo nei metodi della classe
         $this->productService = $productService;
-     
         $this->excelReader = $excelReader;
     }
 
     public function importFromFile(string $filePath): ImportReport
     {
-        // Crea un nuovo oggetto ImportReport vuoto che accumulerà i risultati (creati, aggiornati, ignorati, errori)
         $report = new ImportReport();
 
         // Tenta di leggere il file Excel; se fallisce cattura l'eccezione
@@ -56,32 +51,25 @@ final class ImportService
 
         // Itera su ogni riga restituita dall'ExcelReader (ognuna è un array associativo colonna → valore)
         foreach ($rows as $row) {
+           
             // array_filter mantiene solo i valori non vuoti 
             $nonEmptyValues = array_filter($row, function($value) {
-                // Converte il valore in stringa, rimuove spazi bianchi e verifica che non sia vuoto
+                // Converte il valore in stringa e verifica che non sia vuoto
                 return !empty(trim((string) $value));
             });
 
             // Se tutti i valori della riga erano vuoti, $nonEmptyValues sarà un array vuoto
             if (empty($nonEmptyValues)) {
-            // Registra la riga vuota nel report come ignorata
                 $report->addIgnoredRow($rowNumber, 'Empty row - all cells are blank');
-               
-                // Avanza al numero di riga successivo
                 $rowNumber++;
-               
-                // Salta questa iterazione e passa alla riga successiva del ciclo
                 continue;
             }
 
-            // Estrae il valore grezzo della colonna SKU dalla riga corrente
             $sku = $this->extractValue($row, 'SKU');
 
-            // Valida il formato dello SKU grezzo: se non è valido, tenta la sanificazione prima di scartarlo
             if (!$this->productService->validateSku($sku)) {
                 $sanitizedSku = $this->sanitizeSku($sku);
                 
-                // Se lo SKU sanificato è ancora vuoto, significa che era composto solo da caratteri invalidi
                 if (empty($sanitizedSku)) {
                     $report->addIgnoredRow($rowNumber, 'SKU is empty or contains only invalid characters');
                 } else {
@@ -93,7 +81,6 @@ final class ImportService
                 continue;
             }
 
-            // Controlla se questo SKU è già stato elaborato in una riga precedente dello stesso file (duplicato)
             if (isset($processedSkus[$sku])) {
                 $report->addIgnoredRow($rowNumber, 'Duplicate SKU in file (first occurrence at row ' . $processedSkus[$sku] . ')', $sku);
                 $rowNumber++;
@@ -121,7 +108,7 @@ final class ImportService
         $description = $this->extractValue($row, 'DESCRIPTION');
         $price = $this->sanitizePrice($this->extractValue($row, 'PRICE'));
 
-        // Ri-valida lo SKU dopo la sanificazione: se è ancora non valido (es. troppo lungo), interrompe con eccezione
+        // Ri-valida lo SKU dopo la sanificazione
         if (!$this->productService->validateSku($sku)) {
             throw new \RuntimeException('Invalid or empty SKU. SKU must contain only alphanumeric characters, dots, dashes, or underscores (max 100 characters)');
         }
@@ -140,7 +127,7 @@ final class ImportService
 
         $existingProduct = $this->productService->findProductBySku($sku);
 
-        // Estrae tutte le colonne extra del file (non SKU/TITLE/DESCRIPTION/PRICE) come tassonomie personalizzate
+        // Estrae tutte le colonne extra del file come tassonomie personalizzate
         $taxonomies = $this->extractTaxonomies($row, $report);
 
         // Costruisce l'array con tutti i dati del prodotto pronti per essere passati al ProductService
@@ -153,11 +140,8 @@ final class ImportService
             'taxonomies' => $taxonomies,
         ];
 
-        // Se esiste già un prodotto semplice WooCommerce con questo SKU, lo aggiorna con i nuovi dati
         if ($existingProduct instanceof WC_Product_Simple) {
             $this->productService->updateProduct($existingProduct, $productData);
-            
-            // Incrementa il contatore dei prodotti aggiornati nel report per le statistiche finali
             $report->incrementProductsUpdated();
         } else {
             $this->productService->createProduct($productData);
@@ -192,7 +176,6 @@ final class ImportService
                 continue;
             }
 
-            // Valida la lunghezza del termine di tassonomia: non deve superare 200 caratteri
             if (strlen($value) > 200) {
                 throw new \RuntimeException(
                     sprintf('Taxonomy term "%s" for column "%s" is too long (max 200 characters)',
@@ -201,7 +184,7 @@ final class ImportService
                 );
             }
 
-            // Protezione da caratteri HTML/pericolosi: la regex cerca < > " ' che potrebbero causare XSS o problemi nel DB
+            // Protezione da caratteri pericolosi: la regex cerca < > " ' che potrebbero causare XSS
             if (preg_match('/[<>"\']/', $value)) {
                 throw new \RuntimeException(
                     sprintf('Taxonomy term "%s" for column "%s" contains invalid characters (< > " \' are not allowed)',
@@ -212,7 +195,6 @@ final class ImportService
 
             // Tenta di ottenere o creare la tassonomia WordPress corrispondente al nome della colonna
             try {
-                // ensureTaxonomyForColumn restituisce lo slug della tassonomia, creandola in WordPress se non esiste già
                 $slug = $taxonomyRegistrar->ensureTaxonomyForColumn($columnName);
             } catch (\RuntimeException $e) {
                 throw new \RuntimeException(
@@ -225,14 +207,13 @@ final class ImportService
 
             // Controlla tramite la funzione WordPress nativa se il termine esiste già nella tassonomia
             if (!term_exists($value, $slug)) {
-                // Se il termine non esiste ancora, lo registra nel report per tenere traccia dei nuovi termini creati
                 $report->incrementTermsCreated($value, $slug);
             }
         }
         return $taxonomies;
     }
 
-    // Estrae in modo sicuro un valore da una riga tramite il nome della colonna come chiave
+    // Estrae un valore da una riga 
     private function extractValue(array $row, string $key): string
     {
         return isset($row[$key]) ? trim((string) $row[$key]) : '';
@@ -253,7 +234,7 @@ final class ImportService
     {
         $price = trim($price);
 
-        // Se il prezzo è completamente vuoto oppure contiene solo caratteri non numerici, lo scarta restituendo stringa vuota
+        // Se il prezzo è vuoto oppure contiene solo caratteri non numerici, lo scarta restituendo stringa vuota
         if ($price === '' || preg_match('/^[^0-9.,]+$/', $price)) {
             return '';
         }
