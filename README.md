@@ -2,8 +2,6 @@
 
 Plugin WordPress per importare ed esportare prodotti WooCommerce tramite file Excel.
 
-
-
 ## 📋 Cosa Fa Il Plugin
 
 Questo plugin ti permette di:
@@ -487,3 +485,17 @@ Questo plugin utilizza **Composer** per gestire PHPSpreadsheet invece di include
 - **Risultato:** Repository più leggero, Git più veloce
 
 
+
+---
+
+### 📚 Principi SOLID Applicati
+
+| Principio | Come Applicato |
+|-----------|----------------|
+| **S**ingle Responsibility | Ogni classe ha un solo motivo per cambiare (AdminPage→UI, ImportService→business logic) |
+| **O**pen/Closed | Estendibile senza modificare codice esistente (es. TaxonomyConfig) |
+| **L**iskov Substitution | I service sono sostituibili con mock nei test |
+| **I**nterface Segregation | Trait SecureFormHandler fornisce solo metodi necessari |
+| **D**ependency Inversion | Dipendenze iniettate, non istanziate internamente |
+
+---

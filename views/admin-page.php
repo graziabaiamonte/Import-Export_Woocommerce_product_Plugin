@@ -18,11 +18,16 @@ if (!defined('ABSPATH')) {
     <?php endforeach; ?>
 
     <div class="woo-excel-importer-container">
+        
         <!-- Import Section -->
         <div class="card" style="max-width: 800px;">
             <h2><?php echo esc_html__('Import Products from Excel', 'woo-excel-importer'); ?></h2>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="woo_excel_import">
+
+                // parametro action = 'woo_excel_import' >> Identifica a cosa serve questo nonce — WordPress lo usa per generare e verificare il token
+                //
+                // name	'woo_excel_import_nonce' >>	Il name dell'input hidden nell'HTML, usato per inviare il token al server quando il form viene sottomesso
+                //
                 <?php wp_nonce_field('woo_excel_import', 'woo_excel_import_nonce'); ?>
                 
                 <table class="form-table">
@@ -58,3 +63,8 @@ if (!defined('ABSPATH')) {
 
     </div>
 </div>
+
+
+// NONCE
+//
+// token di sicurezza temporaneo che WordPress genera e poi verifica. Serve a garantire che una richiesta (es. submit di un form) provenga davvero dalla tua pagina e non da un sito esterno malevolo — CSRF (Cross-Site Request Forgery).
