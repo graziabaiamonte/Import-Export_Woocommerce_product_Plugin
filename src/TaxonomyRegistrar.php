@@ -158,24 +158,6 @@ final class TaxonomyRegistrar
         return TaxonomyConfig::getKnownTaxonomies();
     }
 
-    // Metodo privato che recupera le tassonomie custom create dall'utente tramite l'interfaccia del plugin.
-    // private function getCustomTaxonomies(): array
-    // {
-    //     // Recupera l'opzione 'woo_excel_importer_custom_taxonomies' dal database
-    //     // `get_option()` legge dalla tabella wp_options di WordPress usando la chiave specificata.
-    //     $custom = get_option('woo_excel_importer_custom_taxonomies', []);
-    //     // Restituisce l'opzione solo se è un array, altrimenti un array vuoto come fallback sicuro.
-    //     return is_array($custom) ? $custom : [];
-    // }
-
-    // Salva l'array di tassonomie custom nel database WordPress.
-    // Viene chiamato ogni volta che l'utente aggiunge o rimuove una tassonomia custom dall'interfaccia del plugin. (funzioanlità non usata >> elimina)
-    // private function saveCustomTaxonomies(array $customTaxonomies): void
-    // {
-    //     // `update_option(..., false)` aggiorna il valore in wp_options; false = non caricare l'opzione ad ogni richiesta (autoload disabilitato).
-    //     update_option('woo_excel_importer_custom_taxonomies', $customTaxonomies, false);
-    // }
-
     // Registra una singola tassonomia in WordPress usando il suo array di configurazione.
     private function registerTaxonomy(array $config): void
     {
@@ -254,8 +236,9 @@ final class TaxonomyRegistrar
             return;
         }
 
-        // get_current_screen() è una funzione WP che restituisce un oggetto con informazioni sulla pagina admin dove ti trovi in quel momento. 
+        // funzione WP che restituisce un oggetto con informazioni sulla pagina admin dove ti trovi in quel momento. 
         $screen = get_current_screen();
+
         if (!$screen || $screen->post_type !== 'product') {
             return;
         }
@@ -336,12 +319,13 @@ final class TaxonomyRegistrar
             if (!is_array($submitted)) {
                 $submitted = array_filter([(int) $submitted]);
             } else {
-                // Converte tutti gli elementi dell'array in interi, filtra i falsy e reindex l'array.
+                // Converte tutti gli elementi dell'array in interi e reindex l'array.
                 $submitted = array_values(array_filter(array_map('intval', $submitted)));
             }
 
             // Tronca a massimo 1 termine
             if (count($submitted) > 1) {
+               
                 // Sovrascrive $_POST['tax_input'][$taxonomy] con solo il primo termine selezionato.
                 $_POST['tax_input'][$taxonomy] = [$submitted[0]];
             }
@@ -358,6 +342,7 @@ final class TaxonomyRegistrar
             return null;
         }
 
+        // restituisce lo slug corrispondente
         return $allTaxonomies[$columnName]['slug'];
     }
 
@@ -405,7 +390,6 @@ final class TaxonomyRegistrar
         // Genera uno slug base dal nome colonna sanitizzandolo (solo caratteri validi, minuscolo, ecc.).
         $base = self::sanitizeSlug($columnName);
 
-        // Se la sanitizzazione produce una stringa vuota, usa 'taxonomy' come fallback.
         if ($base === '') {
             // Assegna il valore di fallback 'taxonomy' come base per lo slug.
             $base = 'taxonomy';
@@ -451,8 +435,7 @@ final class TaxonomyRegistrar
         }
 
         // Rimuove gli slug del plugin dall'array passato dal filtro
-        // `array_diff()` restituisce gli elementi del primo array non presenti nel secondo.
-        // `array_values()` reindexizza l'array risultante da 0 (rimuove i gap negli indici).
+        // `array_values()` reindexizza l'array risultante (rimuove i gap negli indici).
         return array_values(array_diff($taxonomies, $ourSlugs));
     }
 
@@ -470,6 +453,7 @@ final class TaxonomyRegistrar
         
         // Controlla se ci sono filtri attivi nell'URL (es. ?woo_excel_tax_filter[taxonomy][]=1).
         if (isset($_GET['woo_excel_tax_filter']) && is_array($_GET['woo_excel_tax_filter'])) {
+          
             // Assegna i filtri dall'URL all'array locale per usarli nel rendering del form.
             $selectedFilters = $_GET['woo_excel_tax_filter'];
         }
